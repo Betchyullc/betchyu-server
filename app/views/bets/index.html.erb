@@ -1,0 +1,45 @@
+<h1>Listing bets</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Betamount</th>
+      <th>Betnoun</th>
+      <th>Betverb</th>
+      <th>Enddate</th>
+      <th>Opponent</th>
+      <th>Opponentstakeamount</th>
+      <th>Opponentstaketype</th>
+      <th>Owner</th>
+      <th>Ownstakeamount</th>
+      <th>Ownstaketype</th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @bets.each do |bet| %>
+      <tr>
+        <td><%= bet.betAmount %></td>
+        <td><%= bet.betNoun %></td>
+        <td><%= bet.betVerb %></td>
+        <td><%= bet.endDate %></td>
+        <td><%= bet.opponent %></td>
+        <td><%= bet.opponentStakeAmount %></td>
+        <td><%= bet.opponentStakeType %></td>
+        <td><%= bet.owner %></td>
+        <td><%= bet.ownStakeAmount %></td>
+        <td><%= bet.ownStakeType %></td>
+        <td><%= link_to 'Show', bet %></td>
+        <td><%= link_to 'Edit', edit_bet_path(bet) %></td>
+        <td><%= link_to 'Destroy', bet, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Bet', new_bet_path %>

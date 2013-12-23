@@ -1,0 +1,57 @@
+<%= form_for(@bet) do |f| %>
+  <% if @bet.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@bet.errors.count, "error") %> prohibited this bet from being saved:</h2>
+
+      <ul>
+      <% @bet.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :betAmount %><br>
+    <%= f.number_field :betAmount %>
+  </div>
+  <div class="field">
+    <%= f.label :betNoun %><br>
+    <%= f.text_field :betNoun %>
+  </div>
+  <div class="field">
+    <%= f.label :betVerb %><br>
+    <%= f.text_field :betVerb %>
+  </div>
+  <div class="field">
+    <%= f.label :endDate %><br>
+    <%= f.date_select :endDate %>
+  </div>
+  <div class="field">
+    <%= f.label :opponent %><br>
+    <%= f.text_field :opponent %>
+  </div>
+  <div class="field">
+    <%= f.label :opponentStakeAmount %><br>
+    <%= f.number_field :opponentStakeAmount %>
+  </div>
+  <div class="field">
+    <%= f.label :opponentStakeType %><br>
+    <%= f.text_field :opponentStakeType %>
+  </div>
+  <div class="field">
+    <%= f.label :owner %><br>
+    <%= f.text_field :owner %>
+  </div>
+  <div class="field">
+    <%= f.label :ownStakeAmount %><br>
+    <%= f.number_field :ownStakeAmount %>
+  </div>
+  <div class="field">
+    <%= f.label :ownStakeType %><br>
+    <%= f.text_field :ownStakeType %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

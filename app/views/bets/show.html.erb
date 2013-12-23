@@ -1,0 +1,54 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Betamount:</strong>
+  <%= @bet.betAmount %>
+</p>
+
+<p>
+  <strong>Betnoun:</strong>
+  <%= @bet.betNoun %>
+</p>
+
+<p>
+  <strong>Betverb:</strong>
+  <%= @bet.betVerb %>
+</p>
+
+<p>
+  <strong>Enddate:</strong>
+  <%= @bet.endDate %>
+</p>
+
+<p>
+  <strong>Opponent:</strong>
+  <%= @bet.opponent %>
+</p>
+
+<p>
+  <strong>Opponentstakeamount:</strong>
+  <%= @bet.opponentStakeAmount %>
+</p>
+
+<p>
+  <strong>Opponentstaketype:</strong>
+  <%= @bet.opponentStakeType %>
+</p>
+
+<p>
+  <strong>Owner:</strong>
+  <%= @bet.owner %>
+</p>
+
+<p>
+  <strong>Ownstakeamount:</strong>
+  <%= @bet.ownStakeAmount %>
+</p>
+
+<p>
+  <strong>Ownstaketype:</strong>
+  <%= @bet.ownStakeType %>
+</p>
+
+<%= link_to 'Edit', edit_bet_path(@bet) %> |
+<%= link_to 'Back', bets_path %>
