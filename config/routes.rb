@@ -1,9 +1,12 @@
 Server::Application.routes.draw do
 
+  resources :updates
+
   resources :invites
 
   resources :bets do
     resources :invites
+    resources :updates
   end
 
   # The priority is based upon order of creation: first created -> highest priority.

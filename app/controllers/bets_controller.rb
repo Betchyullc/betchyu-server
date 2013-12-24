@@ -1,6 +1,6 @@
 class BetsController < ApplicationController
   before_action :set_bet, only: [:show, :edit, :update, :destroy]
-  skip_before_action :verify_authenticity_token, only: [:create]
+  skip_before_action :verify_authenticity_token, only: [:create, :update]
 
   # GET /bets
   # GET /bets.json
@@ -8,19 +8,40 @@ class BetsController < ApplicationController
     rendered = false
     if params[:restriction] && params[:user]
       if params[:restriction] == "goals"
-        @bets = Bet.find_all_by_owner params[:user]
+        @bets = Bet.where("owner = ?", params[:user]).to_a
+	@bets.select! do |b|
+	  if b.current && b.current < b.betAmount || !b.current
+	    b.paid != true
+	  else
+	    b.received != true
+	  end
+	end
       elsif params[:restriction].include? "ongoingBets"
-        @bets = Bet.find_all_by_opponent params[:user]
+        @bets = Bet.where("opponent = ?", params[:user]).to_a
+	@bets.select! do |b|
+	  if b.current && b.current < b.betAmount || !b.current
+	    b.received != true
+	  else
+	    b.paid != true
+	  end
+	end
 	if params[:restriction].include? "openBets"
-	  invList = Invite.find_all_by_invitee params[:user]
+	  invList = Invite.where("invitee = ?", params[:user]).to_a
 	  @openBets = []
 	  invList.each do |inv|
-	    puts inv[:id]
-	    @openBets.push inv.bet
+	    @openBets.push inv.bet if inv.status == "open"
 	  end
 	  rendered = true
 	  render 'myBets.json.jbuilder'
 	end
+      elsif params[:restriction].include? "completedCount"
+        @bets = Bet.find_all_by_owner(params[:user])
+	count = {count: 0}
+	@bets.each do |bet|
+	  count[:count] = count[:count] + 1 if bet.current && bet.betAmount <= bet.current
+	end
+	rendered = true
+	render json: count
       end
     else
       @bets = Bet.all
@@ -31,6 +52,14 @@ class BetsController < ApplicationController
   # GET /bets/1
   # GET /bets/1.json
   def show
+    if params[:reject]
+      @bet.invites.each do |inv|
+        if inv.invitee == params[:reject]
+	  inv.status = "rejected"
+          inv.save
+	end
+      end
+    end
     render 'show.json.jbuilder'
   end
 
@@ -58,14 +87,20 @@ class BetsController < ApplicationController
   # PATCH/PUT /bets/1
   # PATCH/PUT /bets/1.json
   def update
-    respond_to do |format|
-      if @bet.update(bet_params)
-        format.html { redirect_to @bet, notice: 'Bet was successfully updated.' }
-        format.json { head :no_content }
-      else
-        format.html { render action: 'edit' }
-        format.json { render json: @bet.errors, status: :unprocessable_entity }
+    if params[:opponent]
+      @bet.invites.each do |inv|
+        if inv.invitee == params[:opponent]
+	  inv.status = "accepted"
+	else
+	  inv.status = "blocked"
+	end
+        inv.save
       end
+    end
+    if @bet.update(bet_params)
+      head :no_content
+    else
+      render json: @bet.errors, status: :unprocessable_entity
     end
   end
 
@@ -87,6 +122,6 @@ class BetsController < ApplicationController
 
     # Never trust parameters from the scary internet, only allow the white list through.
     def bet_params
-      params.permit(:betAmount, :betNoun, :betVerb, :endDate, :opponent, :opponentStakeAmount, :opponentStakeType, :owner, :ownStakeAmount, :ownStakeType, :current)
+      params.permit(:betAmount, :betNoun, :betVerb, :endDate, :opponent, :opponentStakeAmount, :opponentStakeType, :owner, :ownStakeAmount, :ownStakeType, :current, :paid, :received)
     end
 end

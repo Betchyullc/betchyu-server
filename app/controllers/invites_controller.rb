@@ -8,10 +8,12 @@ class InvitesController < ApplicationController
     rendered = false
     if params[:restriction] && params[:user]
       if params[:restriction] == "count"
-        @invites = { count: Invite.find_all_by_invitee(params[:user]).count }
+        @invites = { count: Invite.find_all_by_invitee_and_status(params[:user], "open").count }
         rendered = true
         render json: @invites
       end
+    elsif params[:bet_id]
+      @invites = Invite.find_all_by_bet_id(params[:bet_id])
     else
       @invites = Invite.all
     end
