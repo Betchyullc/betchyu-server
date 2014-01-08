@@ -51,8 +51,10 @@ class UpdatesController < ApplicationController
       render 'show.json.jbuilder'
     else
       @update = Update.new(update_params)
-      bet.current = @update.value
-      bet.save
+      if bet.betVerb != 'Lose'
+        bet.current = @update.value
+        bet.save
+      end
 
       if @update.save
         render 'show.json.jbuilder'
