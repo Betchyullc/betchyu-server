@@ -46,6 +46,7 @@ class BetsController < ApplicationController
     else
       @bets = Bet.all
     end
+    @bets.sort! {|x,y| x.id <=> y.id }
     render 'index.json.jbuilder' unless rendered
   end
 
