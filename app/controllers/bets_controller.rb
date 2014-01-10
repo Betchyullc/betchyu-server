@@ -58,6 +58,11 @@ class BetsController < ApplicationController
         if inv.invitee == params[:reject]
 	  inv.status = "rejected"
           inv.save
+	  Notification.new({
+	    :user => @bet.owner,
+	    :kind => 1,
+	    :data => params[:reject]
+	  }).save
 	end
       end
     end
@@ -92,8 +97,13 @@ class BetsController < ApplicationController
       @bet.invites.each do |inv|
         if inv.invitee == params[:opponent]
 	  inv.status = "accepted"
+	  Notification.new({
+	    :user => @bet.owner,
+	    :kind => 2,
+	    :data => params[:opponent]
+	  }).save
 	else
-	  inv.status = "blocked"
+	  inv.status = "blocked" unless inv.status == "rejected"
 	end
         inv.save
       end

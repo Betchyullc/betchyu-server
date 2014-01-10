@@ -1,5 +1,7 @@
 Server::Application.routes.draw do
 
+  resources :notifications
+
   resources :updates
 
   resources :invites

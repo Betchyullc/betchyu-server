@@ -11,7 +11,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20131224162523) do
+ActiveRecord::Schema.define(version: 20140110205301) do
+
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "plpgsql"
 
   create_table "bets", force: true do |t|
     t.integer  "betAmount"
@@ -40,7 +43,15 @@ ActiveRecord::Schema.define(version: 20131224162523) do
     t.datetime "updated_at"
   end
 
-  add_index "invites", ["bet_id"], name: "index_invites_on_bet_id"
+  add_index "invites", ["bet_id"], name: "index_invites_on_bet_id", using: :btree
+
+  create_table "notifications", force: true do |t|
+    t.string   "user"
+    t.integer  "kind"
+    t.string   "data"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "updates", force: true do |t|
     t.integer  "value"
@@ -49,6 +60,6 @@ ActiveRecord::Schema.define(version: 20131224162523) do
     t.datetime "updated_at"
   end
 
-  add_index "updates", ["bet_id"], name: "index_updates_on_bet_id"
+  add_index "updates", ["bet_id"], name: "index_updates_on_bet_id", using: :btree
 
 end
