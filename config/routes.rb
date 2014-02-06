@@ -1,5 +1,6 @@
 Server::Application.routes.draw do
 
+  get "user/show"
   resources :notifications
 
   resources :updates
@@ -10,6 +11,8 @@ Server::Application.routes.draw do
     resources :invites
     resources :updates
   end
+
+  get 'user/:id' => 'user#show'
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".

@@ -10,7 +10,17 @@ class BetsController < ApplicationController
       if params[:restriction] == "goals"
         @bets = Bet.where("owner = ?", params[:user]).to_a
 	@bets.select! do |b|
-	  if b.current && b.current < b.betAmount || !b.current || b.betVerb == "Stop"
+	  if b.betVerb == "Lose"
+	    if b.endDate < Date.today-1
+	      if b.updates.last && b.updates.last.value >= b.betAmount
+	        b.received != true
+	      else
+	        b.paid != true
+	      end
+	    else
+	      true
+	    end
+	  elsif b.current && b.current < b.betAmount || !b.current || b.betVerb == "Stop"
 	    b.paid != true
 	  else
 	    b.received != true
