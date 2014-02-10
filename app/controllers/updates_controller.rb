@@ -10,6 +10,7 @@ class UpdatesController < ApplicationController
     else
       @updates = Update.all
     end
+    @updates.sort! {|x,y| x.id <=> y.id }
     render 'index.json.jbuilder'
   end
 
