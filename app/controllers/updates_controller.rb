@@ -6,11 +6,10 @@ class UpdatesController < ApplicationController
   # GET /updates.json
   def index
     if params[:bet_id]
-      @updates = Bet.find(params[:bet_id]).updates
+      @updates = Bet.find(params[:bet_id]).updates.sort! {|x,y| x.id <=> y.id }
     else
       @updates = Update.all
     end
-    @updates.sort! {|x,y| x.id <=> y.id }
     render 'index.json.jbuilder'
   end
 
