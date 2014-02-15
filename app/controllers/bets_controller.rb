@@ -11,14 +11,10 @@ class BetsController < ApplicationController
         @bets = Bet.where("owner = ?", params[:user]).to_a
 	@bets.select! do |b|
 	  if b.betVerb == "Lose"
-	    if b.endDate < Date.today-1
-	      if b.updates.last && b.updates.last.value >= b.betAmount
-	        b.received != true
-	      else
-	        b.paid != true
-	      end
+	    if b.updates.last && b.updates.last.value >= b.betAmount
+	      b.received != true
 	    else
-	      true
+	      b.paid != true
 	    end
 	  elsif b.current && b.current < b.betAmount || !b.current || b.betVerb == "Stop"
 	    b.paid != true
