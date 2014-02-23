@@ -9,28 +9,10 @@ class BetsController < ApplicationController
     if params[:restriction] && params[:user]
       if params[:restriction] == "goals"
         @bets = Bet.where("owner = ?", params[:user]).to_a
-	@bets.select! do |b|
-	  if b.betVerb == "Lose"
-	    if b.updates.last && b.updates.last.value >= b.betAmount
-	      b.received != true
-	    else
-	      b.paid != true
-	    end
-	  elsif b.current && b.current < b.betAmount || !b.current || b.betVerb == "Stop"
-	    b.paid != true
-	  else
-	    b.received != true
-	  end
-	end
+	@bets = excludeFinished
       elsif params[:restriction].include? "ongoingBets"
         @bets = Bet.where("opponent = ?", params[:user]).to_a
-	@bets.select! do |b|
-	  if b.current && b.current < b.betAmount || !b.current
-	    b.received != true
-	  else
-	    b.paid != true
-	  end
-	end
+	@bets = excludeFinished(false)
 	if params[:restriction].include? "openBets"
 	  invList = Invite.where("invitee = ?", params[:user]).to_a
 	  @openBets = []
@@ -140,5 +122,37 @@ class BetsController < ApplicationController
     # Never trust parameters from the scary internet, only allow the white list through.
     def bet_params
       params.permit(:betAmount, :betNoun, :betVerb, :endDate, :opponent, :opponentStakeAmount, :opponentStakeType, :owner, :ownStakeAmount, :ownStakeType, :current, :paid, :received)
+    end
+
+    def excludeFinished(ownBet = true)
+      if ownBet
+	return @bets.select do |b|
+	  if b.betVerb == "Lose"
+	    if b.updates.last && b.updates.last.value <= (b.current-b.betAmount)
+	      b.received != true
+	    else
+	      b.paid != true
+	    end
+	  elsif (b.current && b.current < b.betAmount) || !b.current || b.betVerb == "Stop"
+	    b.paid != true
+	  else
+	    b.received != true
+	  end
+	end
+      else
+	return @bets.select do |b|
+	  if b.betVerb == "Lose"
+	    if b.updates.last && b.updates.last.value <= (b.current-b.betAmount)
+	      b.paid != true
+	    else
+	      b.received != true
+	    end
+	  elsif (b.current && b.current < b.betAmount) || !b.current || b.betVerb == "Stop"
+	    b.received != true
+	  else
+	    b.paid != true
+	  end
+	end
+      end
     end
 end
