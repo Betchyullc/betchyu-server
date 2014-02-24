@@ -133,13 +133,19 @@ class BetsController < ApplicationController
 	    else
 	      b.paid != true
 	    end
-	  elsif (b.current && b.current < b.betAmount) || !b.current || b.betVerb == "Stop"
+	  elsif b.betVerb == "Stop"
+	    if b.current == 0
+	      b.paid != true
+	    else
+	      b.recieved != true
+	    end
+	  elsif (b.current && b.current < b.betAmount) || !b.current
 	    b.paid != true
 	  else
 	    b.received != true
 	  end
 	end
-      else
+      else  # the opponent's version
 	return @bets.select do |b|
 	  if b.betVerb == "Lose"
 	    if b.updates.last && b.updates.last.value <= (b.current-b.betAmount)
@@ -147,7 +153,13 @@ class BetsController < ApplicationController
 	    else
 	      b.received != true
 	    end
-	  elsif (b.current && b.current < b.betAmount) || !b.current || b.betVerb == "Stop"
+	  elsif b.betVerb == "Stop"
+	    if b.current == 0
+	      b.recieved != true
+	    else
+	      b.paid != true
+	    end
+	  elsif (b.current && b.current < b.betAmount) || !b.current
 	    b.received != true
 	  else
 	    b.paid != true
