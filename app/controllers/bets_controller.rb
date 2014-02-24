@@ -137,7 +137,7 @@ class BetsController < ApplicationController
 	    if b.current == 0
 	      b.paid != true
 	    else
-	      b.recieved != true
+	      b.received != true
 	    end
 	  elsif (b.current && b.current < b.betAmount) || !b.current
 	    b.paid != true
@@ -155,7 +155,7 @@ class BetsController < ApplicationController
 	    end
 	  elsif b.betVerb == "Stop"
 	    if b.current == 0
-	      b.recieved != true
+	      b.received != true
 	    else
 	      b.paid != true
 	    end
