@@ -13,6 +13,7 @@ Server::Application.routes.draw do
   end
 
   get 'user/:id' => 'user#show'
+  post 'card' => 'user#card'
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
