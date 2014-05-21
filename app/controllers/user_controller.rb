@@ -24,6 +24,13 @@ class UserController < ApplicationController
         :expiration_year => params[:expiration_year]
       }
     )
+    trans = Transaction.new({
+      :braintree_id => result.transaction.id, 
+      :user => params[:user],
+      :bet => nil    # uhhh how we gonna know the bet id doesnt exist yet?!!!?!?!?!?
+    })
+    trans.save
+
     if result.success?
       render json: {msg:"good"}
     else

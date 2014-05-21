@@ -72,6 +72,15 @@ class BetsController < ApplicationController
     @bet = Bet.new(bet_params)
 
     if @bet.save
+      # this stuff is to update the transaction to know about this bet id
+      t = nil
+      Transaction.where(user: @bet.owner).to_a.each do |trans|
+        t = trans if trans.bet_id == nil
+      end
+      t.bet_id = @bet.id
+      t.save
+
+      # then we render like normal
       render 'show.json.jbuilder'
     else
       render json: @bet.errors, status: :unprocessable_entity
