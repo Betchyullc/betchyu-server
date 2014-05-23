@@ -11,7 +11,7 @@ class BetsController < ApplicationController
         @bets = Bet.where("owner = ?", params[:user]).to_a
 	@bets = excludeFinished
       elsif params[:restriction].include? "ongoingBets"
-        @bets = Bet.where("opponent = ?", params[:user]).to_a
+        @bets = Bet.where(opponent: params[:user], finished: false).to_a
 	@bets = excludeFinished(false)
 	if params[:restriction].include? "openBets"
 	  invList = Invite.where("invitee = ?", params[:user]).to_a
@@ -36,6 +36,14 @@ class BetsController < ApplicationController
     end
     @bets.sort! {|x,y| x.id <=> y.id }
     render 'index.json.jbuilder' unless rendered
+  end
+
+  # GET /goals/697540098
+  def goals
+    @bets = Bet.where(owner: params[:id], finished: false).to_a
+    @bets = excludeFinished
+    @bets.sort! {|x,y| x.id <=> y.id }
+    render 'index.json.jbuilder'
   end
 
   # GET /bets/1
@@ -136,7 +144,9 @@ class BetsController < ApplicationController
     def excludeFinished(ownBet = true)
       if ownBet
 	return @bets.select do |b|
-	  if b.betVerb == "Lose"
+          if b.finished   # this is true when the payment has been submitted for settlement
+            false         # false means exclude the damn thing
+	  elsif b.betVerb == "Lose"
 	    if b.updates.last && b.updates.last.value <= (b.current-b.betAmount)
 	      b.received != true
 	    else
@@ -156,7 +166,9 @@ class BetsController < ApplicationController
 	end
       else  # the opponent's version
 	return @bets.select do |b|
-	  if b.betVerb == "Lose"
+          if b.finished
+            false
+	  elsif b.betVerb == "Lose"
 	    if b.updates.last && b.updates.last.value <= (b.current-b.betAmount)
 	      b.paid != true
 	    else

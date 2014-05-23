@@ -1,4 +1,10 @@
 class NotificationsController < ApplicationController
+  # kind attribute guide:
+  #  1 - rejected invite (data=uid)
+  #  2 - accepted invite (data=uid)
+  #  3 - won a bet (data=amount)
+  #  4 - lost a bet (data=amount)
+
   before_action :set_notification, only: [:show, :edit, :update, :destroy]
   skip_before_action :verify_authenticity_token, only: [:destroy]
 
@@ -6,7 +12,7 @@ class NotificationsController < ApplicationController
   # GET /notifications.json
   def index
     if params[:user]
-      @notifications = Notification.find_all_by_user(params[:user])
+      @notifications = Notification.where(user: params[:user]).to_a
     else
       @notifications = Notification.all
     end

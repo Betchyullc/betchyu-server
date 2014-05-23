@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140513231442) do
+ActiveRecord::Schema.define(version: 20140521184436) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -32,6 +32,7 @@ ActiveRecord::Schema.define(version: 20140513231442) do
     t.integer  "current"
     t.boolean  "paid"
     t.boolean  "received"
+    t.boolean  "finished"
   end
 
   create_table "invites", force: true do |t|
@@ -59,6 +60,7 @@ ActiveRecord::Schema.define(version: 20140513231442) do
     t.string   "user"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.boolean  "submitted"
   end
 
   add_index "transactions", ["bet_id"], name: "index_transactions_on_bet_id", using: :btree
