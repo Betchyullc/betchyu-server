@@ -82,27 +82,27 @@ class UserController < ApplicationController
     # simple logic switch on who gets the winning msg and who gets the losing msg
     def notify_of_bet_finish(b,u,a)
       if b.owner == u
-        Notification.new(
+        Notification.new({
           user: b.opponent,
           kind: 3, # winning notification
-          data: result.transaction.amount
-        ).save
-        Notification.new(
+          data: a
+        }).save
+        Notification.new({
           user: b.owner,
           kind: 4, # losing notification
-          data: result.transaction.amount
-        ).save
+          data: a
+        }).save
       else
-        Notification.new(
+        Notification.new({
           user: b.opponent,
           kind: 4, # losing notification
-          data: result.transaction.amount
-        ).save
-        Notification.new(
+          data: a
+        }).save
+        Notification.new({
           user: b.owner,
           kind: 3, # winning notification
-          data: result.transaction.amount
-        ).save
+          data: a
+        }).save
       end
     end
 
