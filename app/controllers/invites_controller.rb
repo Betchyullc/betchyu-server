@@ -8,14 +8,16 @@ class InvitesController < ApplicationController
     rendered = false
     if params[:restriction] && params[:user]
       if params[:restriction] == "count"
-        @invites = { count: Invite.find_all_by_invitee_and_status(params[:user], "open").count }
+        @invites = {
+          count: Invite.where(invitee: params[:user], status: "open").to_a.count
+        }
         rendered = true
         render json: @invites
       end
     elsif params[:bet_id]
-      @invites = Invite.find_all_by_bet_id(params[:bet_id])
+      @invites = Invite.where(bet_id: params[:bet_id]).to_a
     else
-      @invites = Invite.all
+      @invites = Invite.all if params[:pw] && params[:pw] == Server::Application.config.pw
     end
     render 'index.json.jbuilder' unless rendered
   end

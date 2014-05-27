@@ -1,5 +1,6 @@
 Server::Application.routes.draw do
 
+  get 'bets/cleanup' => 'bets#cleanup'
   get "user/show"
   resources :notifications
 
@@ -16,6 +17,7 @@ Server::Application.routes.draw do
   post 'card' => 'user#card'
   put 'pay' => 'user#pay'
   get 'goals/:id' => 'bets#goals'
+  get 'achievements-count/:id' => 'bets#achievements_count'
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".

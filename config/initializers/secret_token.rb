@@ -10,3 +10,4 @@
 # Make sure your secret_key_base is kept private
 # if you're sharing your code publicly.
 Server::Application.config.secret_key_base = '361db48fbf32baa425f7c79b120b6b9bcf9f6096fa2a35369ff1fd701c54848c7361a7f22d3c5f8952d0c3d7e6af7444b3cc4745b1473d91d813dbc5d9537ea0'
+Server::Application.config.pw = 'Magmos44'
