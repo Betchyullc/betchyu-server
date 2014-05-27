@@ -24,17 +24,17 @@ class UserController < ApplicationController
         :expiration_year => params[:expiration_year]
       }
     )
-    # store the id of the Braintree transaction in our database
-    trans = Transaction.new({
-      :braintree_id => result.transaction.id, 
-      :user => params[:user],
-      :bet => params[:bet_id] ? Bet.find(params[:bet_id]) : nil    # nil is a keyword that lets POST /bets know that it needs to update the transaction with the bet_id
-           # we will get params[:bet_id] when the user is accepting an offered bet
-    })
-    trans.save
 
     if result.success?
       render json: {msg:"Card is approved"}
+      # store the id of the Braintree transaction in our database
+      trans = Transaction.new({
+        :braintree_id => result.transaction.id, 
+        :user => params[:user],
+        :bet => params[:bet_id] ? Bet.find(params[:bet_id]) : nil    # nil is a keyword that lets POST /bets know that it needs to update the transaction with the bet_id
+             # we will get params[:bet_id] when the user is accepting an offered bet
+      })
+      trans.save
     else
       puts result.errors
       puts result.params

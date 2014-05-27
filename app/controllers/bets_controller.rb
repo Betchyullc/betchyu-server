@@ -11,10 +11,10 @@ class BetsController < ApplicationController
         @bets = Bet.where(opponent: params[:user], finished: false).to_a
 	@bets = excludeFinished(false)
 	if params[:restriction].include? "openBets"
-	  invList = Invite.where("invitee = ?", params[:user]).to_a
+	  invList = Invite.where(invitee: params[:user]).to_a
 	  @openBets = []
 	  invList.each do |inv|
-	    @openBets.push inv.bet if inv.status == "open"
+	    @openBets.push inv.bet if inv.status == "open" && inv.bet.finished == false
 	  end
 	  rendered = true
 	  render 'myBets.json.jbuilder'
