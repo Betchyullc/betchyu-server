@@ -45,36 +45,39 @@ class UserController < ApplicationController
 
   # given a bet_id and a user and a win flag, submits the winner(s)'s Transaction(s)
   #  to Braintree, and voids the Transaction(s) of the loser(s)
+  # calls to this method should only come from the owner of the bet
   # MONEY CHANGES HANDS (probably)
   def pay
-    if params[:bet_id] && params[:user]
-      t = Transaction.where(bet_id: params[:bet_id], user: params[:user]).first
-      unless t.submitted == true
-        result = Braintree::Transaction.submit_for_settlement(t.braintree_id)
-        if result.success? # transaction successfully submitted for settlement
-          # update our version of the Transaction
-          t.submitted = true
-          t.save
-          # update the Bet this Transaction is related to
-          b = Bet.find(params[:bet_id])
-          b.finished = true
-          b.save
-          # make a notification for the winner (the user != params[:user])
-          #  and one for the loser (the other of opponent/owner)
-          notify_of_bet_finish(b, params[:user], result.transaction.amount)
-          # clean up the other Transactions, both on Braintree, and with us.
-          Transaction.where(bet_id: params[:bet_id]).to_a.each do |trans|
-            if trans.submitted != true
-              Braintree::Transaction.void(trans.braintree_id)
-              Transaction.destroy(trans.id)
-            end
-          end
-          render json: result
-        else
-          p result.errors
-          render json: result.errors
-        end
+    if params[:bet_id] && params[:user] && params[:win]
+      t_arr = Transaction.where(bet_id: params[:bet_id]).to_a # all Trans associated with this Bet, both winners and losers
+      owner_won = params[:win].to_s == "true"
+      # update the Bet
+      Bet.find(params[:bet_id]).update(status: owner_won ? "won" : "lost")
+      # notify the owner that he won/lost
+
+      results = [] # what we render in response
+      # loop through them all, voiding and submitting as necessary
+      t_arr.each do |t|
+        unless t.submitted == true # somehow, this already got done, so we move along.
+	  owners_trans = t.user == params[:user]
+	  # determine if this trans is the winner's or the loser's
+          if (owner_won && owners_trans) || (!owner_won && !owners_trans)
+	    # just void the transaction
+            results.push Braintree::Transaction.void(t.braintree_id)
+	  else # this transaction needs to be submitted for payment
+            result = Braintree::Transaction.submit_for_settlement(t.braintree_id)
+            if result.success? # transaction successfully submitted for settlement
+              t.update(submitted: true)
+              # notify_of_bet_finish(b, params[:user], result.transaction.amount)
+	      results.push result
+            else
+	      p result.errors
+	      results.push result.errors
+	    end
+	  end
+	end
       end
+      render json: results
     end
   end
 
