@@ -9,21 +9,21 @@ class NotificationsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:destroy]
 
   # GET /notifications
-  # GET /notifications.json
   def index
     if params[:user]
       @notifications = Notification.where(user: params[:user]).to_a
     else
-      @notifications = Notification.all
+      @notifications = [] # what everyone can see
+      @notifications = Notification.all if params[:pw] && params[:pw] == Server::Application.config.pw
     end
     render 'index.json.jbuilder'
   end
 
   # GET /notifications/1
-  # GET /notifications/1.json
   def show
   end
 
+  # scaffolding relic
   # GET /notifications/new
   def new
     @notification = Notification.new
@@ -34,7 +34,6 @@ class NotificationsController < ApplicationController
   end
 
   # POST /notifications
-  # POST /notifications.json
   def create
     @notification = Notification.new(notification_params)
 
@@ -50,7 +49,6 @@ class NotificationsController < ApplicationController
   end
 
   # PATCH/PUT /notifications/1
-  # PATCH/PUT /notifications/1.json
   def update
     respond_to do |format|
       if @notification.update(notification_params)
@@ -64,9 +62,8 @@ class NotificationsController < ApplicationController
   end
 
   # DELETE /notifications/1
-  # DELETE /notifications/1.json
   def destroy
-    @notification.destroy
+    @notification.destroy if params[:pw] && params[:pw] == Server::Application.config.pw
     head :no_content
   end
 
