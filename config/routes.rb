@@ -1,7 +1,6 @@
 Server::Application.routes.draw do
 
   get 'bets/cleanup' => 'bets#cleanup'
-  get "user/show"
   resources :notifications
 
   resources :updates
@@ -16,7 +15,11 @@ Server::Application.routes.draw do
   get 'user/:id' => 'user#show'
   post 'card' => 'user#card'
   put 'pay' => 'user#pay'
-  get 'goals/:id' => 'bets#goals'
+
+  # custom Bet routes
+  get 'my-bets/:id' => 'bets#my_bets'
+  get 'pending-bets/:id' => 'bets#pending'
+  get 'friend-bets/:id' => 'bets#friend'
   get 'achievements-count/:id' => 'bets#achievements_count'
 
   # The priority is based upon order of creation: first created -> highest priority.

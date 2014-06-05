@@ -1,1 +1,1 @@
-json.extract! @bet, :id, :betAmount, :betNoun, :betVerb, :endDate, :opponent, :opponentStakeAmount, :opponentStakeType, :owner, :ownStakeAmount, :ownStakeType, :created_at, :updated_at, :current, :finished
+json.extract! @bet, :id, :verb, :amount, :noun, :duration, :owner, :initial, :stakeType, :stakeAmount, :status, :created_at, :updated_at

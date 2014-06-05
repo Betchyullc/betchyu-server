@@ -11,28 +11,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140521184436) do
+ActiveRecord::Schema.define(version: 20140604150736) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
   create_table "bets", force: true do |t|
-    t.integer  "betAmount"
-    t.string   "betNoun"
-    t.string   "betVerb"
-    t.date     "endDate"
-    t.string   "opponent"
-    t.integer  "opponentStakeAmount"
-    t.string   "opponentStakeType"
+    t.string   "noun"
+    t.string   "verb"
     t.string   "owner"
-    t.integer  "ownStakeAmount"
-    t.string   "ownStakeType"
+    t.integer  "stakeAmount"
+    t.string   "stakeType"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.integer  "current"
-    t.boolean  "paid"
-    t.boolean  "received"
-    t.boolean  "finished"
+    t.decimal  "amount"
+    t.string   "status"
+    t.decimal  "initial"
+    t.integer  "duration"
   end
 
   create_table "invites", force: true do |t|

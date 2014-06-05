@@ -8,7 +8,8 @@ class UserController < ApplicationController
     id = params[:id]    # convinience caching
     @user = {:id => id, :has_acted => false}    # create the user obj
     # if the user has acted
-    @user[:has_acted] = true if Bet.where('owner = ? OR opponent = ?', id, id).to_a.count > 0
+    @user[:has_acted] = true if Transaction.where(user: id).to_a.count > 0
+    @user[:has_acted] = true if Invite.where('invitee = ? AND status != ?', id, "open").to_a.count > 0
     render 'show.json.jbuilder'
   end
 
@@ -26,7 +27,6 @@ class UserController < ApplicationController
     )
 
     if result.success?
-      render json: {msg:"Card is approved"}
       # store the id of the Braintree transaction in our database
       trans = Transaction.new({
         :braintree_id => result.transaction.id, 
@@ -35,6 +35,7 @@ class UserController < ApplicationController
              # we will get params[:bet_id] when the user is accepting an offered bet
       })
       trans.save
+      render json: {msg:"Card is approved"}
     else
       puts result.errors
       puts result.params
@@ -42,7 +43,8 @@ class UserController < ApplicationController
     end
   end
 
-  # given a bet_id and a user, finds the matching Transaction and submits it to Braintree for processing (unless already submitted)
+  # given a bet_id and a user and a win flag, submits the winner(s)'s Transaction(s)
+  #  to Braintree, and voids the Transaction(s) of the loser(s)
   # MONEY CHANGES HANDS (probably)
   def pay
     if params[:bet_id] && params[:user]

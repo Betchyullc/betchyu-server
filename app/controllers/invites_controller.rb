@@ -3,16 +3,15 @@ class InvitesController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:create]
 
   # GET /invites
-  # GET /invites.json
   def index
     rendered = false
     if params[:restriction] && params[:user]
       if params[:restriction] == "count"
-        @invites = {
+        count = {
           count: Invite.where(invitee: params[:user], status: "open").to_a.count
         }
         rendered = true
-        render json: @invites
+        render json: count
       end
     elsif params[:bet_id]
       @invites = Invite.where(bet_id: params[:bet_id]).to_a
@@ -23,22 +22,22 @@ class InvitesController < ApplicationController
   end
 
   # GET /invites/1
-  # GET /invites/1.json
   def show
     render 'show.json.jbuilder'
   end
 
   # GET /invites/new
+  # scaffolding relic
   def new
     @invite = Invite.new
   end
 
   # GET /invites/1/edit
+  # scaffolding relic
   def edit
   end
 
   # POST /invites
-  # POST /invites.json
   def create
     @invite = Invite.new(invite_params)
 
@@ -50,13 +49,31 @@ class InvitesController < ApplicationController
   end
 
   # PATCH/PUT /invites/1
-  # PATCH/PUT /invites/1.json
   def update
     respond_to do |format|
       if @invite.update(invite_params)
+        # make some notificaitons
+        if params[:status] == "accepted"
+	  Notification.new({
+	    :user => @invite.bet.owner,
+	    :kind => 2, # bet accepted notification
+	    :data => params[:name]
+	  }).save
+	  # also, gotta change the status of the bet
+	  @invite.bet.update(status: "accepted")
+        elsif params[:status] == "rejected"
+	  Notification.new({
+	    :user => @bet.owner,
+	    :kind => 1, # bet rejected notification
+	    :data => params[:name]
+	  }).save
+        end
+
+	# respond
         format.html { redirect_to @invite, notice: 'Invite was successfully updated.' }
         format.json { head :no_content }
       else
+        # error msgs response
         format.html { render action: 'edit' }
         format.json { render json: @invite.errors, status: :unprocessable_entity }
       end
@@ -64,9 +81,8 @@ class InvitesController < ApplicationController
   end
 
   # DELETE /invites/1
-  # DELETE /invites/1.json
   def destroy
-    @invite.destroy
+    @invite.destroy if params[:pw] && params[:pw] == Server::Application.config.pw
     respond_to do |format|
       format.html { redirect_to invites_url }
       format.json { head :no_content }

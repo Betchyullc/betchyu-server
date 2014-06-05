@@ -5,9 +5,7 @@ class Bet < ActiveRecord::Base
   before_save :default_values
 
   def default_values
-    self.received ||= false
-    self.paid ||= false
-    self.finished ||= false
-    self.current ||= 0
+    self.initial ||= 0.0
+    self.status ||= "pending"
   end
 end

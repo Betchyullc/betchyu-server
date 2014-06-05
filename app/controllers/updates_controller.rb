@@ -3,58 +3,54 @@ class UpdatesController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:create]
 
   # GET /updates
-  # GET /updates.json
   def index
     if params[:bet_id]
       @updates = Bet.find(params[:bet_id]).updates.sort! {|x,y| x.id <=> y.id }
     else
-      @updates = Update.all
+      @updates = Update.all if params[:pw] && params[:pw] == Server::Application.config.pw
     end
     render 'index.json.jbuilder'
   end
 
   # GET /updates/1
-  # GET /updates/1.json
   def show
     render 'show.json.jbuilder'
   end
 
+  # scaffolding relic
   # GET /updates/new
   def new
     @update = Update.new
   end
 
+  # scaffolding relic
   # GET /updates/1/edit
   def edit
   end
 
   # POST /updates
-  # POST /updates.json
   def create
     # try to prevent spamming updates
-    alreadyToday = false
+    already_today = false
+
+    # correctness-checking
+    render nothing: true if !params[:bet_id]
     return if !params[:bet_id]
 
     bet = Bet.find(params[:bet_id])
     bet.updates.each do |upd|
       if upd.created_at.to_date == Time.zone.now.to_date
-        alreadyToday = true 
+        already_today = true 
 	@update = upd
       end
     end
-    if alreadyToday && bet.betVerb != 'Stop'
+    # if they already updated today, just modify that update
+    # must allow them to update more than once/day on smoking bets
+    if already_today && bet.verb.casecmp('stop').zero?
       @update.update(update_params)
-      if bet.betVerb != 'Lose'
-        bet.current = @update.value
-        bet.save
-      end
       render 'show.json.jbuilder'
-    else
+    else  # just let them make their update
       @update = Update.new(update_params)
-      if bet.betVerb != 'Lose'
-        bet.current = @update.value
-        bet.save
-      end
 
       if @update.save
         render 'show.json.jbuilder'
@@ -65,7 +61,6 @@ class UpdatesController < ApplicationController
   end
 
   # PATCH/PUT /updates/1
-  # PATCH/PUT /updates/1.json
   def update
     respond_to do |format|
       if @update.update(update_params)
@@ -79,9 +74,9 @@ class UpdatesController < ApplicationController
   end
 
   # DELETE /updates/1
-  # DELETE /updates/1.json
   def destroy
-    @update.destroy
+    @update.destroy if params[:pw] && params[:pw] == Server::Application.config.pw
+
     respond_to do |format|
       format.html { redirect_to updates_url }
       format.json { head :no_content }
