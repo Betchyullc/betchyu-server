@@ -48,7 +48,7 @@ test:
   encoding: unicode
   database: professionalSite_test
   pool: 5
-  username: professionalSite
+  username: Betchyu
   password:
 
 production:
@@ -56,5 +56,5 @@ production:
   encoding: unicode
   database: professionalSite_production
   pool: 5
-  username: professionalSite
+  username: Betchyu
   password:

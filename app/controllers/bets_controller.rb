@@ -22,10 +22,14 @@ class BetsController < ApplicationController
   def pending
     invList = Invite.where(invitee: params[:id], status: "open").to_a
     @bets = []
+    @invs = []
     invList.each do |inv|
-      @bets.push inv.bet if inv.bet.status != "won" && inv.bet.status != "lost"
+      if inv.bet.status != "won" && inv.bet.status != "lost"
+        @bets.push inv.bet 
+        @invs.push inv
+      end
     end
-    render 'index.json.jbuilder'
+    render 'pending.json.jbuilder'
   end
 
   # GET /friend-bets/:id
