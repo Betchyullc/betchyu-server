@@ -16,6 +16,7 @@ class InvitesController < ApplicationController
     elsif params[:bet_id]
       @invites = Invite.where(bet_id: params[:bet_id]).to_a
     else
+      @invites = []
       @invites = Invite.all if params[:pw] && params[:pw] == Server::Application.config.pw
     end
     render 'index.json.jbuilder' unless rendered

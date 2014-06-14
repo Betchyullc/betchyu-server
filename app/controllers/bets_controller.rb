@@ -15,7 +15,7 @@ class BetsController < ApplicationController
   def my_bets
     @bets = Bet.where('owner = ? AND status != ? AND status != ?', params[:id], "won", "lost").to_a
     @bets.sort! {|x,y| x.id <=> y.id }
-    render 'index.json.jbuilder'
+    render 'my-bets.json.jbuilder'
   end
   
   # GET /pending-bets/:id
@@ -41,14 +41,20 @@ class BetsController < ApplicationController
     invs.each do |inv|
       @bets.push(inv.bet) if inv.bet.status != "won" && inv.bet.status != "lost"
     end
-    render 'index.json.jbuilder'
+    render 'my-bets.json.jbuilder'
   end
 
   # GET /achievements-count/:id
   # returns the count of the achieved goals for a given user
   def achievements_count
-    @bets = Bet.where('owner = ? AND status = ?', params[:id], "won").to_a
-    render json: {count: @bets.count}
+    completed_count = Bet.where('owner = ? AND status = ?', params[:id], "won").to_a.count
+    invs = Invite.where(invitee: params[:id], status: "accepted").to_a
+    won_count = 0
+    # count all the bets that user accepted, and then the owner failed on
+    invs.each do |i|
+      won_count += 1 if i.bet.status == 'lost'
+    end
+    render json: {completed: completed_count, won: won_count}
   end
 
   # GET /bets/1

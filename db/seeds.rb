@@ -16,3 +16,7 @@ Invite.create(status: "open", invitee: "100006865445598", inviter: "100006865445
 Invite.create(status: "rejected", invitee: "100006865445598", inviter: "100006865445598",bet:bets.second)
 
 Transaction.create(braintree_id: "2p54xw", user: "100006865445598", submitted: false)
+
+Update.create(value: 3.2, bet_id: 4)
+Update.create(value: 1.0, bet_id: 2)
+Update.create(value: 1.0, bet_id: 2)

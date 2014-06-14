@@ -7,6 +7,7 @@ class UpdatesController < ApplicationController
     if params[:bet_id]
       @updates = Bet.find(params[:bet_id]).updates.sort! {|x,y| x.id <=> y.id }
     else
+      @updates = []
       @updates = Update.all if params[:pw] && params[:pw] == Server::Application.config.pw
     end
     render 'index.json.jbuilder'

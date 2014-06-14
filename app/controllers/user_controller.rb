@@ -37,7 +37,7 @@ class UserController < ApplicationController
       trans.save
       render json: {msg:"Card is approved"}
     else
-      puts result.errors
+      puts result.message
       puts result.params
       render json: {msg:result.message}
     end
@@ -69,11 +69,11 @@ class UserController < ApplicationController
             if result.success? # transaction successfully submitted for settlement
               t.update(submitted: true)
               # notify_of_bet_finish(b, params[:user], result.transaction.amount)
-	      results.push result
+              results.push result
             else
-	      p result.errors
-	      results.push result.errors
-	    end
+              p result.errors
+              results.push result.errors
+            end
 	  end
 	end
       end

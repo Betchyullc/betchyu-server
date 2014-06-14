@@ -63,7 +63,7 @@ class NotificationsController < ApplicationController
 
   # DELETE /notifications/1
   def destroy
-    @notification.destroy if params[:pw] && params[:pw] == Server::Application.config.pw
+    @notification.destroy 
     head :no_content
   end
 
