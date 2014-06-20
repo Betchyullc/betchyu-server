@@ -129,17 +129,25 @@ class BetsController < ApplicationController
   # called by authorized source to make the server run through all the bets and update the ones that have not had friends accept them
   def cleanup
     if params[:pw] && params[:pw] == Server::Application.config.pw
-      num_killed = 0
+      num = {killed: 0, finished: 0}
       Bet.all.each do |b|
-        expiration = (b.endDate.to_time - b.created_at) / 3
+        end_d = (b.created_at + b.duration).to_time
+        expiration = (end_d - b.created_at) / 3 * 86400 #to get seconds
         current = Time.now - b.created_at
         # if the bet has gone more than a third of it's length without being accepted
         if b.status == "pending" && current > expiration
           b.destroy
-          num_killed += 1
+          num[:killed] += 1
+        elsif b.status == "accepted" && Time.now > end_d
+          if b.verb != 'Stop'
+            finish_bet(b, false)
+          else
+            finish_bet b
+          end
+          num[:finished] += 1
         end
       end
-      render json: "cleaned #{num_killed}"
+      render json: "cleaned #{num[:killed]} and fininshed #{num[:finished]}"
     else
       render nothing: true
     end
@@ -154,5 +162,33 @@ class BetsController < ApplicationController
     # Never trust parameters from the wild internet, only allow the white list through
     def bet_params
       params.permit(:amount, :noun, :verb, :owner, :stakeAmount, :stakeType, :duration, :initial, :status)
+    end
+
+    def finish_bet(b, owner_won = true)
+      t_arr = Transaction.where(bet_id: b.id).to_a # all Trans associated with this Bet, both winners and losers
+      # update the Bet
+      b.update(status: owner_won ? "won" : "lost")
+      # notify the owner that he won/lost
+      Notification.create(kind: owner_won ? 3 : 4, user: b.owner)
+
+      # loop through them all, voiding and submitting as necessary
+      t_arr.each do |t|
+        unless t.submitted == true # somehow, this already got done, so we move along.
+	  owners_trans = t.user == b.owner
+	  # determine if this trans is the winner's or the loser's
+          if (owner_won && owners_trans) || (!owner_won && !owners_trans)
+	    # just void the transaction
+            Braintree::Transaction.void(t.braintree_id)
+	  else # this transaction needs to be submitted for payment
+            result = Braintree::Transaction.submit_for_settlement(t.braintree_id)
+            if result.success? # transaction successfully submitted for settlement
+              t.update(submitted: true)
+              # notify_of_bet_finish(b, params[:user], result.transaction.amount)
+            else
+              p result.errors
+            end
+	  end
+	end
+      end
     end
 end
