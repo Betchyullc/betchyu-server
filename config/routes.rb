@@ -20,6 +20,7 @@ Server::Application.routes.draw do
   get 'my-bets/:id' => 'bets#my_bets'
   get 'pending-bets/:id' => 'bets#pending'
   get 'friend-bets/:id' => 'bets#friend'
+  get 'past-bets/:id' => 'bets#past'
   get 'achievements-count/:id' => 'bets#achievements_count'
 
   # The priority is based upon order of creation: first created -> highest priority.

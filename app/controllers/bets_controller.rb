@@ -44,6 +44,20 @@ class BetsController < ApplicationController
     render 'my-bets.json.jbuilder'
   end
 
+  # GET /past-bets/:id
+  # gets all the bets which :id owns, and are either 'won' or 'lost'
+  def past
+    # make your own past bets
+    @bets = Bet.where('owner = ? AND status = ? OR status = ?', params[:id], "won", "lost").to_a
+    # make the friend's past bets
+    invs = Invite.where(invitee: params[:id], status: "accepted").to_a
+    @fbets = []
+    invs.each do |inv|
+      @fbets.push(inv.bet) if inv.bet.status == "won" && inv.bet.status == "lost"
+    end
+    render 'past.json.jbuilder'
+  end
+
   # GET /achievements-count/:id
   # returns the count of the achieved goals for a given user
   def achievements_count
