@@ -53,7 +53,7 @@ class BetsController < ApplicationController
     invs = Invite.where(invitee: params[:id], status: "accepted").to_a
     @fbets = []
     invs.each do |inv|
-      @fbets.push(inv.bet) if inv.bet.status == "won" && inv.bet.status == "lost"
+      @fbets.push(inv.bet) if inv.bet.status == "won" || inv.bet.status == "lost"
     end
     render 'past.json.jbuilder'
   end
