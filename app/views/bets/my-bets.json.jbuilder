@@ -8,7 +8,7 @@ json.array!(@bets) do |bet|
   tp = (bet.initial + p) / (bet.initial + bet.amount) * 100 
   tp = 0 if bet.verb == 'Lose' #auto-zero, then real number if we can
   tp = (bet.updates.last.value / bet.amount * 100).to_i if bet.verb == 'Lose' && bet.updates.last && bet.updates.last.value > 0
-  tp = bet.updates.count*100 / bet.duration if bet.noun.downcase == 'smoking'
+  tp = (Time.now - bet.created_at) / (60*60*24) *100 / bet.duration if bet.noun.downcase == 'smoking'
   json.progress tp.to_i
 
   opps = []
