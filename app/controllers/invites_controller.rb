@@ -51,33 +51,29 @@ class InvitesController < ApplicationController
 
   # PATCH/PUT /invites/1
   def update
-    respond_to do |format|
-      if @invite.update(invite_params)
-        # make some notificaitons
-        if params[:status] == "accepted"
-	  Notification.new({
-	    :user => @invite.bet.owner,
-	    :kind => 2, # bet accepted notification
-	    :data => params[:name]
-	  }).save
-	  # also, gotta change the status of the bet
-	  @invite.bet.update(status: "accepted")
-        elsif params[:status] == "rejected"
-	  Notification.new({
-	    :user => @bet.owner,
-	    :kind => 1, # bet rejected notification
-	    :data => params[:name]
-	  }).save
-        end
-
-	# respond
-        format.html { redirect_to @invite, notice: 'Invite was successfully updated.' }
-        format.json { head :no_content }
-      else
-        # error msgs response
-        format.html { render action: 'edit' }
-        format.json { render json: @invite.errors, status: :unprocessable_entity }
+    if @invite.update(invite_params)
+      # make some notificaitons
+      if params[:status] == "accepted"
+        Notification.new({
+          :user => @invite.bet.owner,
+          :kind => 2, # bet accepted notification
+          :data => params[:name]
+        }).save
+        # also, gotta change the status of the bet
+        @invite.bet.update(status: "accepted")
+      elsif params[:status] == "rejected"
+        Notification.new({
+          :user => @invite.bet.owner,
+          :kind => 1, # bet rejected notification
+          :data => params[:name]
+        }).save
       end
+
+      # respond
+      render json: "status updated"
+    else
+      # error msgs response
+      render json: @invite.errors, status: :unprocessable_entity
     end
   end
 
