@@ -48,7 +48,7 @@ class BetsController < ApplicationController
   # gets all the bets which :id owns, and are either 'won' or 'lost'
   def past
     # make your own past bets
-    @bets = Bet.where('owner = ? AND status = ? OR status = ?', params[:id], "won", "lost").to_a
+    @bets = Bet.where('owner = ? AND (status = ? OR status = ? )', params[:id], "won", "lost").to_a
     # make the friend's past bets
     invs = Invite.where(invitee: params[:id], status: "accepted").to_a
     @fbets = []
