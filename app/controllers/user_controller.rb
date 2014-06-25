@@ -16,15 +16,31 @@ class UserController < ApplicationController
   # validates the attached (from POST) card info via BrainTree servers, but DOES NOT
   #  make a transaction
   def card
-    result = Braintree::Transaction.sale(
-      :amount => params[:amount],
-      :credit_card => {
-        :number => params[:card_number],
-        :cvv => params[:cvv],
-        :expiration_month => params[:expiration_month],
-        :expiration_year => params[:expiration_year]
-      }
-    )
+    is_new_bet = params[:bet_id] == nil
+    if is_new_bet
+      result = nil
+      params[:opponent_count].to_i.times do
+        result = Braintree::Transaction.sale(
+          :amount => params[:amount],
+          :credit_card => {
+            :number => params[:card_number],
+            :cvv => params[:cvv],
+            :expiration_month => params[:expiration_month],
+            :expiration_year => params[:expiration_year]
+          }
+        )
+      end
+    else
+      result = Braintree::Transaction.sale(
+        :amount => params[:amount],
+        :credit_card => {
+          :number => params[:card_number],
+          :cvv => params[:cvv],
+          :expiration_month => params[:expiration_month],
+          :expiration_year => params[:expiration_year]
+        }
+      )
+    end
 
     if result.success?
       # store the id of the Braintree transaction in our database
@@ -55,7 +71,8 @@ class UserController < ApplicationController
       Bet.find(params[:bet_id]).update(status: owner_won ? "won" : "lost")
 
       # don't want to charge people if they had no opponents.
-      if get_bet_opponents(params[:bet_id]).count == 0
+      opps = get_bet_opponents(params[:bet_id])
+      if opps.count == 0
         t_arr.each do |t|
           Braintree::Transaction.void(t.braintree_id)
         end
@@ -65,6 +82,7 @@ class UserController < ApplicationController
       # notify the owner that he won/lost
 
       results = [] # what we render in response
+      num_submitted = 0
       # loop through them all, voiding and submitting as necessary
       t_arr.each do |t|
         unless t.submitted == true # somehow, this already got done, so we move along.
@@ -73,9 +91,10 @@ class UserController < ApplicationController
           if (owner_won && owners_trans) || (!owner_won && !owners_trans)
 	    # just void the transaction
             results.push Braintree::Transaction.void(t.braintree_id)
-	  else # this transaction needs to be submitted for payment
+	  elsif num_submitted < opps.count # this transaction needs to be submitted for payment
             result = Braintree::Transaction.submit_for_settlement(t.braintree_id)
             if result.success? # transaction successfully submitted for settlement
+              num_submitted += 1
               t.update(submitted: true)
               # notify_of_bet_finish(b, params[:user], result.transaction.amount)
               results.push result
@@ -83,6 +102,9 @@ class UserController < ApplicationController
               p result.errors
               results.push result.errors
             end
+          else
+	    # just void the transaction
+            results.push Braintree::Transaction.void(t.braintree_id)
 	  end
 	end
       end
