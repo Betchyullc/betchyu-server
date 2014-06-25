@@ -53,6 +53,15 @@ class UserController < ApplicationController
       owner_won = params[:win].to_s == "true"
       # update the Bet
       Bet.find(params[:bet_id]).update(status: owner_won ? "won" : "lost")
+
+      # don't want to charge people if they had no opponents.
+      if get_bet_opponents(params[:bet_id]).count == 0
+        t_arr.each do |t|
+          Braintree::Transaction.void(t.braintree_id)
+        end
+        render json: "no charge"
+        return
+      end
       # notify the owner that he won/lost
 
       results = [] # what we render in response
@@ -82,6 +91,15 @@ class UserController < ApplicationController
   end
 
   private
+
+    # returns an array of userIds of the opponents of a bet
+    def get_bet_opponents(bet_id)
+      opps = []
+      Bet.find(bet_id).invites.each do |i|
+        opps.push i.invitee if i.status == "accepted"
+      end
+      return opps
+    end
 
     # b = the Bet, u = UserID string, a = result.transaction.amount
     # simple logic switch on who gets the winning msg and who gets the losing msg
