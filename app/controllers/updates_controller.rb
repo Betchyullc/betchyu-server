@@ -30,6 +30,7 @@ class UpdatesController < ApplicationController
   end
 
   # POST /updates
+  # comes back with the bet that got updated
   def create
     # try to prevent spamming updates
     already_today = false
@@ -49,12 +50,14 @@ class UpdatesController < ApplicationController
     # must allow them to update more than once/day on smoking bets
     if already_today && bet.verb.casecmp('stop').zero?
       @update.update(update_params)
-      render 'show.json.jbuilder'
+      @bet = Bet.find(params[:bet_id])
+      render 'bets/show.json.jbuilder'
     else  # just let them make their update
       @update = Update.new(update_params)
 
       if @update.save
-        render 'show.json.jbuilder'
+        @bet = Bet.find(params[:bet_id])
+        render 'bets/show.json.jbuilder'
       else
         render json: @update.errors, status: :unprocessable_entity
       end
