@@ -47,6 +47,7 @@ class UpdatesController < ApplicationController
 	@update = upd
       end
     end
+    puts "got here"
     # if they already updated today, just modify that update
     # must allow them to update more than once/day on smoking bets
     if already_today && bet.verb.casecmp('stop').zero?
@@ -66,10 +67,16 @@ class UpdatesController < ApplicationController
       end
     end
     if updated
+      puts 'trying to push'
       notifs = []
       get_bet_opponents(params[:bet_id]).each do |opponent|
         usr = User.where(fb_id: opponent)
-        notifs.push(APNS::Notification.new(usr.device, alert: 'Your friend updated the bet!', badge: 1, sound: 'default'))
+        begin
+          notifs.push(APNS::Notification.new(usr.device, alert: 'Your friend updated the bet!', badge: 1, sound: 'default'))
+        rescue Exception => e
+          puts e.message
+          puts e.backtrace.inspect
+        end
       end
       APNS.send_notifications(notifs)
     end
