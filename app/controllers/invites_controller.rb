@@ -44,6 +44,7 @@ class InvitesController < ApplicationController
 
     if @invite.save
       render 'show.json.jbuilder'
+      push_notify_user(params[:invitee], "A friend invited you to a new Betchyu! See who it is...")
     else
       render json: @invite.errors, status: :unprocessable_entity
     end

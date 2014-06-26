@@ -11,4 +11,34 @@ class ApplicationController < ActionController::Base
     end
     return opps
   end
+
+  def push_notify_user(uid = "", msg = "hello")
+    usr = User.where(fb_id: uid).first
+    if usr
+      begin
+        APNS.send_notification(usr.device, alert: msg, badge: 1, sound: 'default')
+      rescue Exception => e
+        puts e.message
+        puts e.backtrace.inspect
+      end
+    end
+  end
+
+  def push_notify_users(userIdList = [], msg = "hello")
+    notifs = []
+    userIdList.each do |usrId|
+      usr = User.where(fb_id: usrId).first
+      if usr
+        notifs.push(
+          APNS::Notification.new(
+            usr.device, 
+            alert: msg, 
+            badge: 1, 
+            sound: 'default'
+          )
+        )
+      end
+    end
+    APNS.send_notifications(notifs)
+  end
 end

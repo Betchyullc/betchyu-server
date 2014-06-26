@@ -80,23 +80,35 @@ class UserController < ApplicationController
         return
       end
       # notify the owner that he won/lost
+      if owner_won
+        push_notify_user(params[:user], "You won a bet. You'll recieve your prize soon--and your friends are paying!")
+      else
+        push_notify_user(params[:user], "You lost a bet. Your card is being charged for the prize.")
+      end
 
       results = [] # what we render in response
       num_submitted = 0
       # loop through them all, voiding and submitting as necessary
       t_arr.each do |t|
         unless t.submitted == true # somehow, this already got done, so we move along.
-	  owners_trans = t.user == params[:user]
-	  # determine if this trans is the winner's or the loser's
-          if (owner_won && owners_trans) || (!owner_won && !owners_trans)
-	    # just void the transaction
+       	  owners_trans = t.user == params[:user]
+          # notify galore!
+          unless owners_trans
+            if owner_won
+              push_notify_user(t.user, "You lost a bet. Your card is being charged for the prize.")
+            else
+              push_notify_user(t.user, "You won a bet. Your prize is on it's way (courtesy of your friend!)")
+            end
+          end
+          # determine if this trans is the winner's or the loser's
+          if (owner_won && owners_trans) || (!owner_won && !owners_trans)     
+          # just void the transaction
             results.push Braintree::Transaction.void(t.braintree_id)
-	  elsif num_submitted < opps.count # this transaction needs to be submitted for payment
+          elsif num_submitted < opps.count # this transaction needs to be submitted for payment
             result = Braintree::Transaction.submit_for_settlement(t.braintree_id)
             if result.success? # transaction successfully submitted for settlement
               num_submitted += 1
               t.update(submitted: true)
-              # notify_of_bet_finish(b, params[:user], result.transaction.amount)
               results.push result
             else
               p result.errors
