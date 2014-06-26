@@ -71,11 +71,14 @@ class UpdatesController < ApplicationController
       notifs = []
       get_bet_opponents(params[:bet_id]).each do |opponent|
         usr = User.where(fb_id: opponent)
-        begin
-          notifs.push(APNS::Notification.new(usr.device, alert: 'Your friend updated the bet!', badge: 1, sound: 'default'))
-        rescue Exception => e
-          puts e.message
-          puts e.backtrace.inspect
+        if usr
+          puts "fb_id:#{usr.fb_id} device:#{usr.device}"
+          begin
+            notifs.push(APNS::Notification.new(usr.device, alert: 'Your friend updated the bet!', badge: 1, sound: 'default'))
+          rescue Exception => e
+            puts e.message
+            puts e.backtrace.inspect
+          end
         end
       end
       APNS.send_notifications(notifs)
