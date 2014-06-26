@@ -70,7 +70,7 @@ class UpdatesController < ApplicationController
       puts 'trying to push'
       notifs = []
       get_bet_opponents(params[:bet_id]).each do |opponent|
-        usr = User.where(fb_id: opponent)
+        usr = User.where(fb_id: opponent).first
         if usr
           puts "fb_id:#{usr.fb_id} device:#{usr.device}"
           begin
