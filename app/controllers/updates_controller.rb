@@ -34,6 +34,7 @@ class UpdatesController < ApplicationController
   def create
     # try to prevent spamming updates
     already_today = false
+    updated = false
 
     # correctness-checking
     render nothing: true if !params[:bet_id]
@@ -52,15 +53,25 @@ class UpdatesController < ApplicationController
       @update.update(update_params)
       @bet = Bet.find(params[:bet_id])
       render 'bets/show.json.jbuilder'
+      updated = true
     else  # just let them make their update
       @update = Update.new(update_params)
 
       if @update.save
         @bet = Bet.find(params[:bet_id])
         render 'bets/show.json.jbuilder'
+        updated = true
       else
         render json: @update.errors, status: :unprocessable_entity
       end
+    end
+    if updated
+      notifs = []
+      get_bet_opponents(params[:bet_id]).each do |opponent|
+        usr = User.where(fb_id: opponent)
+        notifs.push(APNS::Notification.new(usr.device, alert: 'Your friend updated the bet!', badge: 1, sound: 'default'))
+      end
+      APNS.send_notifications(notifs)
     end
   end
 

@@ -112,16 +112,19 @@ class UserController < ApplicationController
     end
   end
 
+  #POST /user
+  def create
+    @user = User.new(user_params)
+
+    if @user.save
+      render 'show.json.jbuilder'
+    else
+      render json: @user.errors, status: :unprocessable_entity
+    end
+  end
+
   private
 
-    # returns an array of userIds of the opponents of a bet
-    def get_bet_opponents(bet_id)
-      opps = []
-      Bet.find(bet_id).invites.each do |i|
-        opps.push i.invitee if i.status == "accepted"
-      end
-      return opps
-    end
 
     # b = the Bet, u = UserID string, a = result.transaction.amount
     # simple logic switch on who gets the winning msg and who gets the losing msg
@@ -149,6 +152,10 @@ class UserController < ApplicationController
           data: a
         }).save
       end
+    end
+
+    def user_params
+      params.permit(:fb_id, :device)
     end
 
 end

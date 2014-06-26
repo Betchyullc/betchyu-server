@@ -35,6 +35,8 @@ end
 # Use braintree to access Braintree stuff for payments
 gem 'braintree'
 
+gem 'apns'
+
 # Use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.1.2'
 

@@ -13,6 +13,7 @@ Server::Application.routes.draw do
   end
 
   get 'user/:id' => 'user#show'
+  post 'user' => 'user#create'
   post 'card' => 'user#card'
   put 'pay' => 'user#pay'
 
