@@ -1,6 +1,6 @@
 class UserController < ApplicationController
 
-  skip_before_action :verify_authenticity_token, only: [:card, :pay]
+  skip_before_action :verify_authenticity_token, only: [:card, :pay, :create]
 
   # checks to see if any database entries concerning the user :id
   #  exist, in order to return true/false, so that the app knows if the user is new or not
