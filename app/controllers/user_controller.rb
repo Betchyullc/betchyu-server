@@ -114,12 +114,16 @@ class UserController < ApplicationController
 
   #POST /user
   def create
-    @user = User.new(user_params)
+    if User.where('fb_id = ? AND device = ?', params[:fb_id], params[:device]).to_a.count == 0
+      @user = User.new(user_params)
 
-    if @user.save
-      render 'show2.json.jbuilder' # poor naming, I know.
+      if @user.save
+        render 'show2.json.jbuilder' # poor naming, I know.
+      else
+        render json: @user.errors, status: :unprocessable_entity
+      end
     else
-      render json: @user.errors, status: :unprocessable_entity
+      render json: "duplicate user"
     end
   end
 
