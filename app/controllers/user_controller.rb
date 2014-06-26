@@ -117,7 +117,7 @@ class UserController < ApplicationController
     @user = User.new(user_params)
 
     if @user.save
-      render 'show.json.jbuilder'
+      render 'show2.json.jbuilder' # poor naming, I know.
     else
       render json: @user.errors, status: :unprocessable_entity
     end
