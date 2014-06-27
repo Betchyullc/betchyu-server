@@ -1,6 +1,7 @@
 class UserController < ApplicationController
 
   skip_before_action :verify_authenticity_token, only: [:card, :pay, :create]
+  before_action :verify_user, only: [:pay]
 
   # checks to see if any database entries concerning the user :id
   #  exist, in order to return true/false, so that the app knows if the user is new or not
@@ -8,8 +9,9 @@ class UserController < ApplicationController
     id = params[:id]    # convinience caching
     @user = {:id => id, :has_acted => false}    # create the user obj
     # if the user has acted
-    @user[:has_acted] = true if Transaction.where(user: id).to_a.count > 0
-    @user[:has_acted] = true if Invite.where('invitee = ? AND status != ?', id, "open").to_a.count > 0
+    @user[:has_acted] = true if User.where(fb_id: id).to_a.count > 0
+    @user[:has_acted] = true if !@user[:has_acted] and Transaction.where(user: id).to_a.count > 0
+    @user[:has_acted] = true if !@user[:has_acted] and Invite.where('invitee = ? AND status != ?', id, "open").to_a.count > 0
     render 'show.json.jbuilder'
   end
 
@@ -126,49 +128,24 @@ class UserController < ApplicationController
 
   #POST /user
   def create
-    if User.where('fb_id = ? AND device = ?', params[:fb_id], params[:device]).to_a.count == 0
+    if User.where(fb_id: params[:fb_id]).to_a.count == 0
       @user = User.new(user_params)
 
       if @user.save
-        render 'show2.json.jbuilder' # poor naming, I know.
+        render json: "created user #{@user.fb_id}"
       else
         render json: @user.errors, status: :unprocessable_entity
       end
-    else
+    else 
+      if params[:device] && params[:fb_id]
+        @user = User.where(fb_id: params[:fb_id]).first
+        @user.update(device: params[:device]) unless @user.device == params[:device]
+      end
       render json: "duplicate user"
     end
   end
 
   private
-
-
-    # b = the Bet, u = UserID string, a = result.transaction.amount
-    # simple logic switch on who gets the winning msg and who gets the losing msg
-    def notify_of_bet_finish(b,u,a)
-      if b.owner == u
-        Notification.new({
-          user: b.opponent,
-          kind: 3, # winning notification
-          data: a
-        }).save
-        Notification.new({
-          user: b.owner,
-          kind: 4, # losing notification
-          data: a
-        }).save
-      else
-        Notification.new({
-          user: b.opponent,
-          kind: 4, # losing notification
-          data: a
-        }).save
-        Notification.new({
-          user: b.owner,
-          kind: 3, # winning notification
-          data: a
-        }).save
-      end
-    end
 
     def user_params
       params.permit(:fb_id, :device)

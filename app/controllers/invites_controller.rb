@@ -1,5 +1,6 @@
 class InvitesController < ApplicationController
   before_action :set_invite, only: [:show, :edit, :update, :destroy]
+  before_action :verify_user, only: [:create, :update]
   skip_before_action :verify_authenticity_token, only: [:create, :update]
 
   # GET /invites

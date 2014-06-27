@@ -1,5 +1,7 @@
 class UpdatesController < ApplicationController
   before_action :set_update, only: [:show, :edit, :update, :destroy]
+  before_action :verify_user, only: [:show, :update, :create]
+  before_action :match_owner_and_uid, only: [:update, :create]
   skip_before_action :verify_authenticity_token, only: [:create]
 
   # GET /updates
@@ -105,5 +107,15 @@ class UpdatesController < ApplicationController
     # Never trust parameters from the scary internet, only allow the white list through.
     def update_params
       params.permit(:value, :bet_id, :created_at)
+    end
+
+    def match_owner_and_uid
+      if @update
+        render json: "bad" unless @update.bet.owner == params[:uid]
+      elsif params.include? :bet_id
+        render json: "bad" unless Bet.find(params[:bet_id]).owner == params[:uid]
+      else
+        render json: "bad"
+      end
     end
 end

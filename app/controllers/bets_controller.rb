@@ -1,6 +1,9 @@
 class BetsController < ApplicationController
   before_action :set_bet, only: [:show, :edit, :update, :destroy]
-  skip_before_action :verify_authenticity_token, only: [:create, :update]
+  before_action :verify_user, except: [:index]
+  before_action :prove_user_owns_bet, only: [:destroy, :update]
+  before_action :match_uid_and_id, only: [:my_bets, :pending, :friend, :past]
+  skip_before_action :verify_authenticity_token, only: [:create, :update, :destroy]
 
   # GET /bets
   def index
@@ -59,11 +62,12 @@ class BetsController < ApplicationController
   end
 
   # GET /achievements-count/:id
-  # returns the count of the achieved goals for a given user
+  # completed: the number of bets made by the user, that he also won
+  # won: the number of bets made by anyone, that he won.
   def achievements_count
     completed_count = Bet.where('owner = ? AND status = ?', params[:id], "won").to_a.count
     invs = Invite.where(invitee: params[:id], status: "accepted").to_a
-    won_count = 0
+    won_count = completed_count
     # count all the bets that user accepted, and then the owner failed on
     invs.each do |i|
       won_count += 1 if i.bet.status == 'lost'
@@ -119,11 +123,11 @@ class BetsController < ApplicationController
 
   # DELETE /bets/1
   def destroy
-    @bet.destroy if params[:pw] && params[:pw] == Server::Application.config.pw
-    respond_to do |format|
-      format.html { redirect_to bets_url }
-      format.json { head :no_content }
+    @bet.transactions.each do |t|
+      Braintree::Transaction.void(t.braintree_id)
     end
+    @bet.destroy 
+    head :no_content
   end
 
   # called by authorized source to make the server run through all the bets and update the ones that have not had friends accept them
@@ -162,6 +166,14 @@ class BetsController < ApplicationController
     # Never trust parameters from the wild internet, only allow the white list through
     def bet_params
       params.permit(:amount, :noun, :verb, :owner, :stakeAmount, :stakeType, :duration, :initial, :status)
+    end
+
+    def prove_user_owns_bet
+      render json: "not yours" if @bet.owner != params[:uid]
+    end
+
+    def match_uid_and_id
+      render json: "not yours" if params[:id] != params[:uid]
     end
 
     def finish_bet(b, owner_won = true)

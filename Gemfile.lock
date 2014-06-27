@@ -28,6 +28,7 @@ GEM
     apns (1.0.0)
     arel (4.0.1)
     atomic (1.1.14)
+    bcrypt (3.1.7)
     braintree (2.30.2)
       builder (>= 2.0.0)
     builder (3.1.4)
@@ -112,6 +113,7 @@ PLATFORMS
 
 DEPENDENCIES
   apns
+  bcrypt (~> 3.1.2)
   braintree
   coffee-rails (~> 4.0.0)
   jbuilder (~> 1.2)

@@ -1,3 +1,4 @@
+require 'bcrypt'
 class ApplicationController < ActionController::Base
   # Prevent CSRF attacks by raising an exception.
   # For APIs, you may want to use :null_session instead.
@@ -14,7 +15,7 @@ class ApplicationController < ActionController::Base
 
   def push_notify_user(uid = "", msg = "hello")
     usr = User.where(fb_id: uid).first
-    if usr
+    if usr && usr.device
       begin
         APNS.send_notification(usr.device, alert: msg, badge: 1, sound: 'default')
       rescue Exception => e
@@ -28,7 +29,7 @@ class ApplicationController < ActionController::Base
     notifs = []
     userIdList.each do |usrId|
       usr = User.where(fb_id: usrId).first
-      if usr
+      if usr && usr.device
         notifs.push(
           APNS::Notification.new(
             usr.device, 
@@ -40,5 +41,20 @@ class ApplicationController < ActionController::Base
       end
     end
     APNS.send_notifications(notifs)
+  end
+
+  def verify_user
+    unless params[:uid].present? && params[:pw].present?
+      render json: "not authenticated"
+      return
+    end
+    real_pw = params[:pw] + "abc123betchyu"
+    usr = User.where(fb_id: params[:uid]).first
+    if usr
+      render json: "bad authentication" unless usr.password == real_pw 
+    else
+      render json: "not authenticated"
+    end
+    # the user is legit if we get here
   end
 end
