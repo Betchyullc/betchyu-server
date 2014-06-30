@@ -1,6 +1,6 @@
 class BetsController < ApplicationController
   before_action :set_bet, only: [:show, :edit, :update, :destroy]
-  before_action :verify_user, except: [:index]
+  before_action :verify_user, except: [:index, :cleanup]
   before_action :prove_user_owns_bet, only: [:destroy, :update]
   before_action :match_uid_and_id, only: [:my_bets, :pending, :friend, :past]
   skip_before_action :verify_authenticity_token, only: [:create, :update, :destroy]
@@ -188,7 +188,7 @@ class BetsController < ApplicationController
       end
 
       # don't want to charge people if they had no opponents.
-      opps = get_bet_opponents(params[:bet_id])
+      opps = get_bet_opponents(b.id)
       if opps.count == 0
         t_arr.each do |t|
           Braintree::Transaction.void(t.braintree_id)
@@ -196,6 +196,7 @@ class BetsController < ApplicationController
         return
       end
 
+      num_sbumitted = 0
       # loop through them all, voiding and submitting as necessary
       t_arr.each do |t|
         unless t.submitted == true # somehow, this already got done, so we move along.
