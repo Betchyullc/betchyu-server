@@ -1,8 +1,6 @@
 Server::Application.routes.draw do
 
   get 'bets/cleanup' => 'bets#cleanup'
-  resources :notifications
-
   resources :updates
 
   resources :invites
