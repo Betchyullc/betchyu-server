@@ -181,24 +181,48 @@ class BetsController < ApplicationController
       # update the Bet
       b.update(status: owner_won ? "won" : "lost")
       # notify the owner that he won/lost
-      Notification.create(kind: owner_won ? 3 : 4, user: b.owner)
+      if owner_won
+        push_notify_user(b.owner, "You won a bet. You'll recieve your prize soon--and your friends are paying!")
+      else
+        push_notify_user(b.owner, "You lost a bet. Your card is being charged for the prize.")
+      end
+
+      # don't want to charge people if they had no opponents.
+      opps = get_bet_opponents(params[:bet_id])
+      if opps.count == 0
+        t_arr.each do |t|
+          Braintree::Transaction.void(t.braintree_id)
+        end
+        return
+      end
 
       # loop through them all, voiding and submitting as necessary
       t_arr.each do |t|
         unless t.submitted == true # somehow, this already got done, so we move along.
 	  owners_trans = t.user == b.owner
+          # notify galore!
+          unless owners_trans
+            if owner_won
+              push_notify_user(t.user, "You lost a bet. Your card is being charged for the prize.")
+            else
+              push_notify_user(t.user, "You won a bet. Your prize is on it's way (courtesy of your friend!)")
+            end
+          end
 	  # determine if this trans is the winner's or the loser's
           if (owner_won && owners_trans) || (!owner_won && !owners_trans)
 	    # just void the transaction
             Braintree::Transaction.void(t.braintree_id)
-	  else # this transaction needs to be submitted for payment
+          elsif num_submitted < opps.count # this transaction needs to be submitted for payment
             result = Braintree::Transaction.submit_for_settlement(t.braintree_id)
             if result.success? # transaction successfully submitted for settlement
+              num_submitted += 1
               t.update(submitted: true)
-              # notify_of_bet_finish(b, params[:user], result.transaction.amount)
             else
               p result.errors
             end
+          else
+	    # just void the transaction
+            Braintree::Transaction.void(t.braintree_id)
 	  end
 	end
       end
