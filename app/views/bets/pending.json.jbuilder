@@ -5,5 +5,6 @@ json.array!(@bets) do |bet|
     p = i.id if i.bet.id == bet.id
   end
   json.invite p
+  json.progress 0
   json.url bet_url(bet, format: :json)
 end

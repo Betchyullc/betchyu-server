@@ -196,7 +196,7 @@ class BetsController < ApplicationController
         return
       end
 
-      num_sbumitted = 0
+      num_submitted = 0
       # loop through them all, voiding and submitting as necessary
       t_arr.each do |t|
         unless t.submitted == true # somehow, this already got done, so we move along.
