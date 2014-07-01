@@ -7,12 +7,16 @@ class UserController < ApplicationController
   #  exist, in order to return true/false, so that the app knows if the user is new or not
   def show
     id = params[:id]    # convinience caching
-    @user = {:id => id, :has_acted => false}    # create the user obj
+    usr = User.where(fb_id: id).first
+    @user = {
+      :id => id, 
+      :has_acted => false,
+      :allow_analytics => usr && usr.allow_analytics ? usr.allow_analytics : false}    # create the user obj
     # if the user has acted
     @user[:has_acted] = true if User.where(fb_id: id).to_a.count > 0
     @user[:has_acted] = true if !@user[:has_acted] and Transaction.where(user: id).to_a.count > 0
     @user[:has_acted] = true if !@user[:has_acted] and Invite.where('invitee = ? AND status != ?', id, "open").to_a.count > 0
-    render 'show.json.jbuilder'
+    render json: @user
   end
 
   # validates the attached (from POST) card info via BrainTree servers, but DOES NOT
@@ -140,6 +144,7 @@ class UserController < ApplicationController
       if params[:device] && params[:fb_id]
         @user = User.where(fb_id: params[:fb_id]).first
         @user.update(device: params[:device]) unless @user.device == params[:device]
+        @user.update(allow_analytics: params[:allow_analytics]) unless @user.device == params[:allow_analytics] || params[:allow_analytics] == nil
       end
       render json: "duplicate user"
     end
@@ -148,7 +153,7 @@ class UserController < ApplicationController
   private
 
     def user_params
-      params.permit(:fb_id, :device)
+      params.permit(:fb_id, :device, :allow_analytics)
     end
 
 end
