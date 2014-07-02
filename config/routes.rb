@@ -22,7 +22,10 @@ Server::Application.routes.draw do
   get 'past-bets/:id' => 'bets#past'
   get 'achievements-count/:id' => 'bets#achievements_count'
 
-  get 'analytics/standard_report' => 'analytics#standard_report'
+  get 'analytics/standard' => 'analytics#standard'
+  get 'analytics/standard_report' => 'analytics#standard'
+  get 'analytics/demographics' => 'analytics#demographics'
+  get 'analytics/demographics_report' => 'analytics#demographics'
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
