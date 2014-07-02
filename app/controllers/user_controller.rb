@@ -143,8 +143,7 @@ class UserController < ApplicationController
     else 
       if params[:device] && params[:fb_id]
         @user = User.where(fb_id: params[:fb_id]).first
-        @user.update(device: params[:device]) unless @user.device == params[:device]
-        @user.update(allow_analytics: params[:allow_analytics]) unless @user.device == params[:allow_analytics] || params[:allow_analytics] == nil
+        @user.update(user_params) 
       end
       render json: "duplicate user"
     end
@@ -153,7 +152,7 @@ class UserController < ApplicationController
   private
 
     def user_params
-      params.permit(:fb_id, :device, :allow_analytics)
+      params.permit(:fb_id, :device, :allow_analytics, :name, :is_male, :email, :location)
     end
 
 end

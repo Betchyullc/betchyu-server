@@ -19,37 +19,59 @@ class AnalyticsController < ApplicationController
     end
 
     report = {
-      total_bets_created: tot_bets,
-      by_type: {
-        smoking: Bet.where(verb: 'Stop').count,
-        weight:  Bet.where(verb: 'Lose').count,
-        running: Bet.where(verb: 'Run').count,
-        workout: Bet.where(verb: 'Workout').count
+      :"Total bets created" => tot_bets,
+      :"Total by type" => {
+        Smoking: Bet.where(verb: 'Stop').count,
+        Weight:  Bet.where(verb: 'Lose').count,
+        Running: Bet.where(verb: 'Run').count,
+        Workout: Bet.where(verb: 'Workout').count
       },
-      average_bet_duration: avg_bet_dur,
-      total_invites_sent: Invite.count,
-      average_invites_per_bet: Invite.count.to_f / tot_bets,
-      total_validated_invites_accepted: Invite.where(status: "accepted").count,
-      percent_invites_accepted: Invite.where(status: "accepted").count.to_f / Invite.count * 100,
-      total_bets_won_by_owner: total_won,
-      percent_bets_won_by_owner: total_won.to_f / tot_bets * 100,
-      percent_won_by_type: {
-        smoking: Bet.where(status: "won", verb: 'Stop').count.to_f / total_won * 100,
-        weight: Bet.where(status: "won", verb: 'Lose').count.to_f / total_won * 100,
-        running: Bet.where(status: "won", verb: 'Run').count.to_f / total_won * 100,
-        workout: Bet.where(status: "won", verb: 'Workout').count.to_f / total_won * 100,
+      :"Average bet duration" => avg_bet_dur,
+      :"Total invites sent" => Invite.count,
+      :"Average invites per bet" => Invite.count.to_f / tot_bets,
+      :"Total validated invites accepted" => Invite.where(status: "accepted").count,
+      :"Percent invites accepted" => Invite.where(status: "accepted").count.to_f / Invite.count * 100,
+      :"Total bets won by owner" => total_won,
+      :"Percent bets won by owner" => total_won.to_f / tot_bets * 100,
+      :"percent won by type" => {
+        Smoking: Bet.where(status: "won", verb: 'Stop').count.to_f / total_won * 100,
+        Weight: Bet.where(status: "won", verb: 'Lose').count.to_f / total_won * 100,
+        Running: Bet.where(status: "won", verb: 'Run').count.to_f / total_won * 100,
+        Workout: Bet.where(status: "won", verb: 'Workout').count.to_f / total_won * 100,
       },
-      total_unique_users: User.count,
-      percent_users_only_opened_once: bounced_users.count.to_f / User.count,
-      total_active_users: active_users.count,
-      total_active_bets: Bet.where('status = ? OR status = ?', "pending", "accepted").count
+      :"Total unique users" => User.count,
+      :"Percent users only opened once" => bounced_users.count.to_f / User.count,
+      :"Total active users" => active_users.count,
+      :"Total active bets" => Bet.where('status = ? OR status = ?', "pending", "accepted").count
     }
     render json: report
   end
 
   def demographics
+#    tot_age = 0
+#    User.all.each {|u| tot_age += u.age.to_i if u.age}
+    locs = []
+    User.all.each do |u|
+      matched = false
+      locs.each do |loc|
+        if loc[:name] == u.location
+          matched = true 
+          loc[:amount] += 1
+        end
+      end
+      unless matched
+        locs.push({name: u.location, amount: 1}) if u.location
+      end
+    end
+
     render json: {
-    
+      :"Total Unique Users" => User.count,
+      :"Percent Male" => User.where(is_male: true).count.to_f / User.count * 100,
+#      :"Average Age" => tot_age.to_f / User.count,
+      :"Locations" => {
+        :"Most Common" => "bah"
+        :"Second Most Common" => "blah"
+      }
     }
   end
 
