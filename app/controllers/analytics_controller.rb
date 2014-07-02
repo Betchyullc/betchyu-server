@@ -63,16 +63,65 @@ class AnalyticsController < ApplicationController
         locs.push({name: u.location, amount: 1}) if u.location
       end
     end
+    big_loc = 0
+    big_loc = locs.select do |loc|
+      if big_loc < loc[:amount]
+        big_loc = loc[:amount]
+        true
+      end
+    end.last
+    sec_loc = 0
+    sec_loc = locs.select do |loc|
+      if sec_loc < loc[:amount] && big_loc[:amount] > loc[:amount]
+        sec_loc = loc[:amount]
+        true
+      end
+    end.last
+    last_loc = User.count
+    last_loc = locs.select do |loc|
+      if last_loc > loc[:amount]
+        last_loc = loc[:amount]
+        true
+      end
+    end.last
 
     render json: {
       :"Total Unique Users" => User.count,
       :"Percent Male" => User.where(is_male: true).count.to_f / User.count * 100,
 #      :"Average Age" => tot_age.to_f / User.count,
       :"Locations" => {
-        :"Most Common" => "bah",
-        :"Second Most Common" => "blah"
+        :"Total Unique Locations" => locs.count,
+        :"Most Common" => big_loc,
+        :"Second Most Common" => sec_loc,
+        :"Least Common" => last_loc
       }
     }
+  end
+
+  def daily
+    day = params[:day] ? params[:day].to_date : nil
+    if day == nil
+      render json: {
+        :"Daily Average of Goals Created" => 1,
+        :"Daily Average Bets Accepted" => 1,
+        :"Daily Average Bets Won by Owner" => 1,
+        :"Daily Average Dollars Added to Account" => 1
+      }
+    else
+      invites_today = Invite.where('status = ? AND updated_at >= ? AND updated_at < ?', "accepted", day.to_time.beginning_of_day, (day+1).to_time.beginning_of_day)
+      dollars = 0
+      invites_today.each do |i|
+        dollars += i.bet.stakeAmount
+      end
+      render json: {
+        :"Data for Day #{day}" => {
+          :"Goals Created" => Bet.where('created_at >= ? AND created_at < ?', day.to_time.beginning_of_day, (day+1).to_time.beginning_of_day).count,
+          :"Bets Accepted" => invites_today.count,
+          :"Bets Won by Owner" => Bet.where('status = ? AND updated_at >= ? AND updated_at < ?', "won", day.to_time.beginning_of_day, (day+1).to_time.beginning_of_day).count,
+          :"Dollars Added to Account" => dollars
+        }
+      }
+    end
   end
 
   private
