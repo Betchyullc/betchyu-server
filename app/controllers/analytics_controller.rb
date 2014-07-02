@@ -69,7 +69,7 @@ class AnalyticsController < ApplicationController
       :"Percent Male" => User.where(is_male: true).count.to_f / User.count * 100,
 #      :"Average Age" => tot_age.to_f / User.count,
       :"Locations" => {
-        :"Most Common" => "bah"
+        :"Most Common" => "bah",
         :"Second Most Common" => "blah"
       }
     }
