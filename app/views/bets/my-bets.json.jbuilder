@@ -11,9 +11,13 @@ json.array!(@bets) do |bet|
   tp = (Time.now - bet.created_at) / (60*60*24) *100 / bet.duration if bet.noun.downcase == 'smoking'
   json.progress tp.to_i
 
-  opps = []
+  opps = {accepted: [], others: []}
   bet.invites.each do |i|
-    opps.push i.invitee if i.status == "accepted"
+    if i.status == "accepted"
+      opps[:accepted].push i.invitee 
+    else
+      opps[:others].push i.invitee 
+    end
   end
   json.opponents opps
 
