@@ -1,7 +1,7 @@
 class UserController < ApplicationController
 
-  skip_before_action :verify_authenticity_token, only: [:card, :pay, :create]
-  before_action :verify_user, only: [:pay]
+  skip_before_action :verify_authenticity_token, only: [:card, :pay, :create, :update]
+  before_action :verify_user, only: [:pay, :update]
 
   # checks to see if any database entries concerning the user :id
   #  exist, in order to return true/false, so that the app knows if the user is new or not
@@ -11,9 +11,12 @@ class UserController < ApplicationController
     @user = {
       :id => id, 
       :has_acted => false,
-      :allow_analytics => usr && usr.allow_analytics ? usr.allow_analytics : false}    # create the user obj
+      :allow_analytics => usr && usr.allow_analytics ? usr.allow_analytics : false,
+      :name => usr && usr.name ? usr.name : "No Name",
+      :email => usr && usr.email ? usr.email : "No email given"
+    }    # create the user obj
     # if the user has acted
-    @user[:has_acted] = true if User.where(fb_id: id).to_a.count > 0
+    @user[:has_acted] = true if User.where(fb_id: id).count > 0
     @user[:has_acted] = true if !@user[:has_acted] and Transaction.where(user: id).to_a.count > 0
     @user[:has_acted] = true if !@user[:has_acted] and Invite.where('invitee = ? AND status != ?', id, "open").to_a.count > 0
     render json: @user
@@ -130,6 +133,16 @@ class UserController < ApplicationController
     end
   end
 
+  #PUT /user/:id
+  def update
+    @user = User.where(fb_id: params[:id]).first
+    if @user.update(user_params)
+      render json: "successful update, sir"
+    else
+      render json: @user.errors, status: :unprocessable_entity
+    end
+  end
+
   #POST /user
   def create
     if User.where(fb_id: params[:fb_id]).to_a.count == 0
@@ -143,7 +156,9 @@ class UserController < ApplicationController
     else 
       if params[:device] && params[:fb_id]
         @user = User.where(fb_id: params[:fb_id]).first
-        @user.update(user_params) 
+        u_p = user_params
+        u_p.delete(:email) if @user.email != nil
+        @user.update(u_p) 
       end
       render json: "duplicate user"
     end

@@ -11,6 +11,7 @@ Server::Application.routes.draw do
   end
 
   get 'user/:id' => 'user#show'
+  put 'user/:id' => 'user#update'
   post 'user' => 'user#create'
   post 'card' => 'user#card'
   put 'pay' => 'user#pay'

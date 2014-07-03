@@ -101,11 +101,43 @@ class AnalyticsController < ApplicationController
   def daily
     day = params[:day] ? params[:day].to_date : nil
     if day == nil
+      start = Bet.first.created_at.to_date
+      days = (Date.today - start).to_i
+
+      # totals, which become averages we report
+      new_goals = 0
+      accepted_invites = 0
+      won_bets = 0
+      lost_bets = 0
+      dollars_added = 0
+
+      # go through each day, updating the totals
+      days.times do |iter|
+        d = start + iter
+        invites_today = Invite.where('status = ? AND updated_at >= ? AND updated_at < ?', "accepted", d.to_time.beginning_of_day, (d+1).to_time.beginning_of_day)
+        invites_today.each do |i|
+          dollars_added += i.bet.stakeAmount
+        end
+        new_goals += Bet.where('created_at >= ? AND created_at < ?', d.to_time.beginning_of_day, (d+1).to_time.beginning_of_day).count
+        accepted_invites += invites_today.count
+        won_bets += Bet.where('status = ? AND updated_at >= ? AND updated_at < ?', "won", d.to_time.beginning_of_day, (d+1).to_time.beginning_of_day).count
+        lost_bets += Bet.where('status = ? AND updated_at >= ? AND updated_at < ?', "lost", d.to_time.beginning_of_day, (d+1).to_time.beginning_of_day).count
+      end
+      # make an average by dividing
+      new_goals = new_goals.to_f / days
+      accepted_invites = accepted_invites.to_f / days
+      won_bets = won_bets.to_f / days
+      lost_bets = lost_bets.to_f / days
+      dollars_added = dollars_added.to_f / days
+
+      # print out the report
       render json: {
-        :"Daily Average of Goals Created" => 1,
-        :"Daily Average Bets Accepted" => 1,
-        :"Daily Average Bets Won by Owner" => 1,
-        :"Daily Average Dollars Added to Account" => 1
+        :"Days Covered by this Report" => days,
+        :"Average Daily Goals Created" => new_goals,
+        :"Average Daily Invites Accepted" => accepted_invites,
+        :"Average Daily Bets Won by Owner" => won_bets,
+        :"Average Daily Bets Lost by Owner" => lost_bets,
+        :"Average Daily Dollars Added to Account" => dollars_added
       }
     else
       invites_today = Invite.where('status = ? AND updated_at >= ? AND updated_at < ?', "accepted", day.to_time.beginning_of_day, (day+1).to_time.beginning_of_day)
@@ -116,8 +148,9 @@ class AnalyticsController < ApplicationController
       render json: {
         :"Data for Day #{day}" => {
           :"Goals Created" => Bet.where('created_at >= ? AND created_at < ?', day.to_time.beginning_of_day, (day+1).to_time.beginning_of_day).count,
-          :"Bets Accepted" => invites_today.count,
+          :"Invites Accepted" => invites_today.count,
           :"Bets Won by Owner" => Bet.where('status = ? AND updated_at >= ? AND updated_at < ?', "won", day.to_time.beginning_of_day, (day+1).to_time.beginning_of_day).count,
+          :"Bets Lost by Owner" => Bet.where('status = ? AND updated_at >= ? AND updated_at < ?', "lost", day.to_time.beginning_of_day, (day+1).to_time.beginning_of_day).count,
           :"Dollars Added to Account" => dollars
         }
       }
