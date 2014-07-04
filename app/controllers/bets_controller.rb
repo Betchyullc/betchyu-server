@@ -218,8 +218,8 @@ class BetsController < ApplicationController
           elsif num_submitted < opps.count # this transaction needs to be submitted for payment
             result = Braintree::Transaction.submit_for_settlement(t.braintree_id)
             if result.success? # transaction successfully submitted for settlement
+              t.update(submitted: true, to: owner_won ? b.owner : opps[num_submitted])
               num_submitted += 1
-              t.update(submitted: true)
             else
               p result.errors
             end

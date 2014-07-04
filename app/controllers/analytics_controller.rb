@@ -157,6 +157,30 @@ class AnalyticsController < ApplicationController
     end
   end
 
+  def need_to_buy
+    day = params[:day] ? params[:day].to_date : nil
+
+    render json: "no day given, dumbass" if day == nil
+    return if day == nil
+    
+    trans_arr = Transaction.where('submitted = ? AND updated_at >= ? AND updated_at < ?', true, day.to_time.beginning_of_day, (day+1).to_time.beginning_of_day).to_a
+    things_to_buy = {
+      amazon: [],
+      target: [],
+      itunes: []
+    }
+    trans_arr.each do |t|
+      push_obj = {
+        amount: t.bet.stakeAmount,
+        destination: User.where(fb_id: t.to).first.email
+      }
+      things_to_buy[:amazon].push(push_obj) if t.bet.stakeType == "Amazon Gift Card"
+      things_to_buy[:target].push(push_obj) if t.bet.stakeType == "Target Gift Card"
+      things_to_buy[:itunes].push(push_obj) if t.bet.stakeType == "iTunes Gift Card"
+    end
+    render json: things_to_buy
+  end
+
   private
     def global_password
       unless params[:pw] && params[:pw] == Server::Application.config.pw

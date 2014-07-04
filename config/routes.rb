@@ -29,6 +29,7 @@ Server::Application.routes.draw do
   get 'analytics/demographics_report' => 'analytics#demographics'
   get 'analytics/daily_report' => 'analytics#daily'
   get 'analytics/daily' => 'analytics#daily'
+  get 'analytics/buy' => 'analytics#need_to_buy'
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".

@@ -116,9 +116,9 @@ class UserController < ApplicationController
           elsif num_submitted < opps.count # this transaction needs to be submitted for payment
             result = Braintree::Transaction.submit_for_settlement(t.braintree_id)
             if result.success? # transaction successfully submitted for settlement
-              num_submitted += 1
-              t.update(submitted: true)
+              t.update(submitted: true, to: owner_won ? params[:user] : opps[num_submitted])
               results.push result
+              num_submitted += 1
             else
               p result.errors
               results.push result.errors
