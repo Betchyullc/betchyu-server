@@ -27,7 +27,7 @@ class UserController < ApplicationController
   def card
     is_new_bet = params[:bet_id] == nil
     if is_new_bet
-      result = nil
+      the_msg = "Card is approved"
       params[:opponent_count].to_i.times do
         result = Braintree::Transaction.sale(
           :amount => params[:amount],
@@ -38,7 +38,19 @@ class UserController < ApplicationController
             :expiration_year => params[:expiration_year]
           }
         )
+        if result.success?
+          # store the id of the Braintree transaction in our database
+          trans = Transaction.create({
+            :braintree_id => result.transaction.id, 
+            :user => params[:user],
+            :bet => params[:bet_id] ? Bet.find(params[:bet_id]) : nil    # nil is a keyword that lets POST /bets know that it needs to update the transaction with the bet_id
+                 # we will get params[:bet_id] when the user is accepting an offered bet
+          })
+        else
+          the_message = result.message
+        end
       end
+      render json: {msg: the_msg}
     else
       result = Braintree::Transaction.sale(
         :amount => params[:amount],
@@ -49,23 +61,22 @@ class UserController < ApplicationController
           :expiration_year => params[:expiration_year]
         }
       )
+      if result.success?
+        # store the id of the Braintree transaction in our database
+        trans = Transaction.create({
+          :braintree_id => result.transaction.id, 
+          :user => params[:user],
+          :bet => params[:bet_id] ? Bet.find(params[:bet_id]) : nil    # nil is a keyword that lets POST /bets know that it needs to update the transaction with the bet_id
+               # we will get params[:bet_id] when the user is accepting an offered bet
+        })
+        render json: {msg:"Card is approved"}
+      else
+        puts result.message
+        puts result.params
+        render json: {msg:result.message}
+      end
     end
 
-    if result.success?
-      # store the id of the Braintree transaction in our database
-      trans = Transaction.new({
-        :braintree_id => result.transaction.id, 
-        :user => params[:user],
-        :bet => params[:bet_id] ? Bet.find(params[:bet_id]) : nil    # nil is a keyword that lets POST /bets know that it needs to update the transaction with the bet_id
-             # we will get params[:bet_id] when the user is accepting an offered bet
-      })
-      trans.save
-      render json: {msg:"Card is approved"}
-    else
-      puts result.message
-      puts result.params
-      render json: {msg:result.message}
-    end
   end
 
   # given a bet_id and a user and a win flag, submits the winner(s)'s Transaction(s)
@@ -84,6 +95,7 @@ class UserController < ApplicationController
       if opps.count == 0
         t_arr.each do |t|
           Braintree::Transaction.void(t.braintree_id)
+          t.update(submitted: false)
         end
         render json: "no charge"
         return
