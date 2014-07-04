@@ -112,7 +112,7 @@ class UserController < ApplicationController
 
         total = 0
         b.invites.each do |i|
-          if i.status = 'accepted'
+          if i.status == 'accepted'
             total += i.stakeAmount
           end
         end
@@ -126,7 +126,7 @@ class UserController < ApplicationController
         if result.success?
           # record the transaction in the database as if it were a bunch of little ones
           b.invites.each do |i|
-            if i.status = 'accepted'
+            if i.status == 'accepted'
               Transaction.create(braintree_id: result.transaction.id, bet_id: b.id, user: params[:user], to: i.invitee, submitted: true)
               push_notify_user(i.invitee, "You won a bet. Your prize is on it's way (courtesy of your friend!)")
             end
