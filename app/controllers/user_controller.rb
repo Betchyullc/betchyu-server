@@ -56,7 +56,7 @@ class UserController < ApplicationController
           :number => params[:card_number],
           :cvv => params[:cvv],
           :expiration_month => params[:expiration_month],
-          :expiration_year => params[:expiration_year]
+          :expiration_year => params[:expiration_year],
           :options => {
             :verify_card => true
           }
