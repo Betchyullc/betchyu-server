@@ -86,7 +86,7 @@ class UserController < ApplicationController
         push_notify_user(params[:user], "You won a bet. You'll recieve your prize soon--and your friends are paying!")
 
         b.invites.each do |i|
-          if i.status = 'accepted'
+          if i.status == 'accepted'
             result = Braintree::Transaction.sale(
               :amount => b.stakeAmount,
               :customer_id => i.invitee,
