@@ -204,7 +204,7 @@ class BetsController < ApplicationController
         total = 0
         b.invites.each do |i|
           if i.status == 'accepted'
-            total += i.stakeAmount
+            total += b.stakeAmount
           end
         end
         result = Braintree::Transaction.sale(
