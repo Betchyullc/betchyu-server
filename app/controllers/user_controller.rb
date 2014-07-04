@@ -43,7 +43,7 @@ class UserController < ApplicationController
       )
       if result.success? # this card was new, and passed verification
         render json: {msg: "Card is approved"}
-      elsif result.errors.first.code == 81724 # duplicate code
+      elsif result.errors.first.code == 81724  || result.message == "Duplicate card exists in the vault."# duplicate code
         render json: {msg: "Card is approved"}
       else
         puts result.errors
