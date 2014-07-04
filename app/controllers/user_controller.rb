@@ -25,58 +25,50 @@ class UserController < ApplicationController
   # validates the attached (from POST) card info via BrainTree servers, but DOES NOT
   #  make a transaction
   def card
-    is_new_bet = params[:bet_id] == nil
-    if is_new_bet
-      the_msg = "Card is approved"
-      params[:opponent_count].to_i.times do
-        result = Braintree::Transaction.sale(
-          :amount => params[:amount],
-          :credit_card => {
-            :number => params[:card_number],
-            :cvv => params[:cvv],
-            :expiration_month => params[:expiration_month],
-            :expiration_year => params[:expiration_year]
-          }
-        )
-        if result.success?
-          # store the id of the Braintree transaction in our database
-          trans = Transaction.create({
-            :braintree_id => result.transaction.id, 
-            :user => params[:user],
-            :bet => params[:bet_id] ? Bet.find(params[:bet_id]) : nil    # nil is a keyword that lets POST /bets know that it needs to update the transaction with the bet_id
-                 # we will get params[:bet_id] when the user is accepting an offered bet
-          })
-        else
-          the_message = result.message
-        end
+    # search for a Braintree customer with passed id
+    begin
+      customer = Braintree::Customer.find(params[:user])
+      # if he exists, try to make a new card for him, but jump ship if it was a duplicate
+      result = Braintree::CreditCard.create(
+        :customer_id => params[:user],
+        :number => params[:card_number],
+        :cvv => params[:cvv],
+        :expiration_month => params[:expiration_month],
+        :expiration_year => params[:expiration_year],
+        :options => {
+          :fail_on_duplicate_payment_method => true,
+          :make_default => true,
+          :verify_card => true
+        }
+      )
+      if result.success? # this card was new, and passed verification
+        render json: {msg: "Card is approved"}
+      elsif result.errors.first.code == 81724 # duplicate code
+        render json: {msg: "Card is approved"}
+      else
+        puts result.errors
+        render json: {msg: result.message}
       end
-      render json: {msg: the_msg}
-    else
-      result = Braintree::Transaction.sale(
-        :amount => params[:amount],
+    rescue Braintree::NotFoundError => e
+      result = Braintree::Customer.create(
+        :id => params[:user],
         :credit_card => {
           :number => params[:card_number],
           :cvv => params[:cvv],
           :expiration_month => params[:expiration_month],
           :expiration_year => params[:expiration_year]
+          :options => {
+            :verify_card => true
+          }
         }
       )
       if result.success?
-        # store the id of the Braintree transaction in our database
-        trans = Transaction.create({
-          :braintree_id => result.transaction.id, 
-          :user => params[:user],
-          :bet => params[:bet_id] ? Bet.find(params[:bet_id]) : nil    # nil is a keyword that lets POST /bets know that it needs to update the transaction with the bet_id
-               # we will get params[:bet_id] when the user is accepting an offered bet
-        })
-        render json: {msg:"Card is approved"}
+        render json: {msg: "Card is approved"}
       else
-        puts result.message
-        puts result.params
-        render json: {msg:result.message}
+        puts result.errors
+        render json: {msg: result.message}
       end
     end
-
   end
 
   # given a bet_id and a user and a win flag, submits the winner(s)'s Transaction(s)
@@ -85,63 +77,70 @@ class UserController < ApplicationController
   # MONEY CHANGES HANDS (probably)
   def pay
     if params[:bet_id] && params[:user] && params[:win]
-      t_arr = Transaction.where(bet_id: params[:bet_id]).to_a # all Trans associated with this Bet, both winners and losers
       owner_won = params[:win].to_s == "true"
       # update the Bet
-      Bet.find(params[:bet_id]).update(status: owner_won ? "won" : "lost")
+      b = Bet.find(params[:bet_id])
+      b.update(status: owner_won ? "won" : "lost")
 
-      # don't want to charge people if they had no opponents.
-      opps = get_bet_opponents(params[:bet_id])
-      if opps.count == 0
-        t_arr.each do |t|
-          Braintree::Transaction.void(t.braintree_id)
-          t.update(submitted: false)
-        end
-        render json: "no charge"
-        return
-      end
-      # notify the owner that he won/lost
       if owner_won
         push_notify_user(params[:user], "You won a bet. You'll recieve your prize soon--and your friends are paying!")
-      else
-        push_notify_user(params[:user], "You lost a bet. Your card is being charged for the prize.")
-      end
 
-      results = [] # what we render in response
-      num_submitted = 0
-      # loop through them all, voiding and submitting as necessary
-      t_arr.each do |t|
-        unless t.submitted == true # somehow, this already got done, so we move along.
-       	  owners_trans = t.user == params[:user]
-          # notify galore!
-          unless owners_trans
-            if owner_won
-              push_notify_user(t.user, "You lost a bet. Your card is being charged for the prize.")
+        b.invites.each do |i|
+          if i.status = 'accepted'
+            result = Braintree::Transaction.sale(
+              :amount => b.stakeAmount,
+              :customer_id => i.invitee,
+              :options => {
+                :submit_for_settlement => true
+              }
+            )
+            if result.success?
+              # record the transaction in the database
+              Transaction.create(braintree_id: result.transaction.id, bet_id: b.id, user: i.invitee, to: params[:user], submitted: true)
+              push_notify_user(i.invitee, "You lost a bet. Your card is being charged for the prize.")
             else
-              push_notify_user(t.user, "You won a bet. Your prize is on it's way (courtesy of your friend!)")
+              # record the MAJOR ISSUE
+              Transaction.create(braintree_id: result.message, bet_id: b.id, user: i.invitee, to: params[:user], submitted: false)
+              puts result.message
             end
           end
-          # determine if this trans is the winner's or the loser's
-          if (owner_won && owners_trans) || (!owner_won && !owners_trans)     
-          # just void the transaction
-            results.push Braintree::Transaction.void(t.braintree_id)
-          elsif num_submitted < opps.count # this transaction needs to be submitted for payment
-            result = Braintree::Transaction.submit_for_settlement(t.braintree_id)
-            if result.success? # transaction successfully submitted for settlement
-              t.update(submitted: true, to: owner_won ? params[:user] : opps[num_submitted])
-              results.push result
-              num_submitted += 1
-            else
-              p result.errors
-              results.push result.errors
+        end
+        render json: "probably ok, bet owner won, and we are submitting a ton (maybe) of transactions"
+
+      else
+        push_notify_user(params[:user], "You lost a bet. Your card is being charged for the prize.")
+
+        total = 0
+        b.invites.each do |i|
+          if i.status = 'accepted'
+            total += i.stakeAmount
+          end
+        end
+        result = Braintree::Transaction.sale(
+          :amount => total,
+          :customer_id => params[:user],
+          :options => {
+            :submit_for_settlement => true
+          }
+        )
+        if result.success?
+          # record the transaction in the database as if it were a bunch of little ones
+          b.invites.each do |i|
+            if i.status = 'accepted'
+              Transaction.create(braintree_id: result.transaction.id, bet_id: b.id, user: params[:user], to: i.invitee, submitted: true)
+              push_notify_user(i.invitee, "You won a bet. Your prize is on it's way (courtesy of your friend!)")
             end
-          else
-	    # just void the transaction
-            results.push Braintree::Transaction.void(t.braintree_id)
-	  end
-	end
+          end
+          render json: "ok, 'sall good, man. owner lost and paid us one huge(maybe) transaction"
+        else
+          # record the MAJOR ISSUE
+          Transaction.create(braintree_id: result.message, bet_id: b.id, user: params[:user], submitted: false)
+          puts result.message
+          render json: "WE DID NOT GET MONEY!!! BAD THING!"
+        end
       end
-      render json: results
+    else #bad params
+      render json: "death"
     end
   end
 

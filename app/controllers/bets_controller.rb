@@ -96,15 +96,6 @@ class BetsController < ApplicationController
     @bet = Bet.new(bet_params)
 
     if @bet.save
-      # this stuff is to update the transaction to know about this bet id
-      Transaction.where(user: @bet.owner).to_a.each do |trans|
-        if trans.bet_id == nil
-          trans.bet_id = @bet.id
-          trans.save
-        end
-      end
-
-      # then we render like normal
       render 'show.json.jbuilder'
     else
       render json: @bet.errors, status: :unprocessable_entity
@@ -179,55 +170,65 @@ class BetsController < ApplicationController
     end
 
     def finish_bet(b, owner_won = true)
-      t_arr = Transaction.where(bet_id: b.id).to_a # all Trans associated with this Bet, both winners and losers
       # update the Bet
       b.update(status: owner_won ? "won" : "lost")
-      # notify the owner that he won/lost
+
       if owner_won
-        push_notify_user(b.owner, "You won a bet. You'll recieve your prize soon--and your friends are paying!")
-      else
-        push_notify_user(b.owner, "You lost a bet. Your card is being charged for the prize.")
-      end
+        push_notify_user(params[:user], "You won a bet. You'll recieve your prize soon--and your friends are paying!")
 
-      # don't want to charge people if they had no opponents.
-      opps = get_bet_opponents(b.id)
-      if opps.count == 0
-        t_arr.each do |t|
-          Braintree::Transaction.void(t.braintree_id)
-        end
-        return
-      end
-
-      num_submitted = 0
-      # loop through them all, voiding and submitting as necessary
-      t_arr.each do |t|
-        unless t.submitted == true # somehow, this already got done, so we move along.
-	  owners_trans = t.user == b.owner
-          # notify galore!
-          unless owners_trans
-            if owner_won
-              push_notify_user(t.user, "You lost a bet. Your card is being charged for the prize.")
+        b.invites.each do |i|
+          if i.status = 'accepted'
+            result = Braintree::Transaction.sale(
+              :amount => b.stakeAmount,
+              :customer_id => i.invitee,
+              :options => {
+                :submit_for_settlement => true
+              }
+            )
+            if result.success?
+              # record the transaction in the database
+              Transaction.create(braintree_id: result.transaction.id, bet_id: b.id, user: i.invitee, to: params[:user], submitted: true)
+              push_notify_user(i.invitee, "You lost a bet. Your card is being charged for the prize.")
             else
-              push_notify_user(t.user, "You won a bet. Your prize is on it's way (courtesy of your friend!)")
+              # record the MAJOR ISSUE
+              Transaction.create(braintree_id: result.message, bet_id: b.id, user: i.invitee, to: params[:user], submitted: false)
+              puts result.message
             end
           end
-	  # determine if this trans is the winner's or the loser's
-          if (owner_won && owners_trans) || (!owner_won && !owners_trans)
-	    # just void the transaction
-            Braintree::Transaction.void(t.braintree_id)
-          elsif num_submitted < opps.count # this transaction needs to be submitted for payment
-            result = Braintree::Transaction.submit_for_settlement(t.braintree_id)
-            if result.success? # transaction successfully submitted for settlement
-              t.update(submitted: true, to: owner_won ? b.owner : opps[num_submitted])
-              num_submitted += 1
-            else
-              p result.errors
+        end
+        render json: "probably ok, bet owner won, and we are submitting a ton (maybe) of transactions"
+
+      else
+        push_notify_user(params[:user], "You lost a bet. Your card is being charged for the prize.")
+
+        total = 0
+        b.invites.each do |i|
+          if i.status = 'accepted'
+            total += i.stakeAmount
+          end
+        end
+        result = Braintree::Transaction.sale(
+          :amount => total,
+          :customer_id => params[:user],
+          :options => {
+            :submit_for_settlement => true
+          }
+        )
+        if result.success?
+          # record the transaction in the database as if it were a bunch of little ones
+          b.invites.each do |i|
+            if i.status = 'accepted'
+              Transaction.create(braintree_id: result.transaction.id, bet_id: b.id, user: params[:user], to: i.invitee, submitted: true)
+              push_notify_user(i.invitee, "You won a bet. Your prize is on it's way (courtesy of your friend!)")
             end
-          else
-	    # just void the transaction
-            Braintree::Transaction.void(t.braintree_id)
-	  end
-	end
+          end
+          render json: "ok, 'sall good, man. owner lost and paid us one huge(maybe) transaction"
+        else
+          # record the MAJOR ISSUE
+          Transaction.create(braintree_id: result.message, bet_id: b.id, user: params[:user], submitted: false)
+          puts result.message
+          render json: "WE DID NOT GET MONEY!!! BAD THING!"
+        end
       end
     end
 end
