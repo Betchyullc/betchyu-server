@@ -56,11 +56,11 @@ class InvitesController < ApplicationController
     if @invite.update(invite_params)
       # make some notificaitons
       if params[:status] == "accepted"
-        push_notify_user @invite.bet.owner, "#{params[:name]} has accepted your bet!"
+        push_notify_user(@invite.bet.owner, "#{params[:name]} has accepted your bet!")
         # also, gotta change the status of the bet
         @invite.bet.update(status: "accepted")
       elsif params[:status] == "rejected"
-        push_notify_user @invite.bet.owner, "#{params[:name]} has rejected your bet..."
+        push_notify_user(@invite.bet.owner, "#{params[:name]} has rejected your bet...")
       end
 
       # respond
