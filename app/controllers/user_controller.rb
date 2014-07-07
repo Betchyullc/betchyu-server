@@ -110,7 +110,7 @@ class UserController < ApplicationController
       else
         push_notify_user(params[:user], "You lost a bet. Your card is being charged for the prize.")
 
-        total = 0
+        total = 0 # find the total number of dollars owed
         b.invites.each do |i|
           if i.status == 'accepted'
             total += b.stakeAmount
