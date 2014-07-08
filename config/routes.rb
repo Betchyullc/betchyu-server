@@ -1,5 +1,7 @@
 Server::Application.routes.draw do
 
+  resources :comments
+
   get 'bets/cleanup' => 'bets#cleanup'
   resources :updates
 
@@ -8,6 +10,7 @@ Server::Application.routes.draw do
   resources :bets do
     resources :invites
     resources :updates
+    resources :comments
   end
 
   get 'user/:id' => 'user#show'

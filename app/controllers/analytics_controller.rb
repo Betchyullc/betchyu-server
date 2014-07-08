@@ -173,7 +173,7 @@ class AnalyticsController < ApplicationController
       usr = User.where(fb_id: t.to).first
       push_obj = {
         amount: t.bet.stakeAmount,
-        destination: usr.email ? usr.email : usr.id
+        destination: usr.email ? usr.email : usr.fb_id
       }
       things_to_buy[:amazon].push(push_obj) if t.bet.stakeType == "Amazon Gift Card"
       things_to_buy[:target].push(push_obj) if t.bet.stakeType == "Target Gift Card"

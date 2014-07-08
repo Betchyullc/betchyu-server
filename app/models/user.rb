@@ -1,4 +1,5 @@
 class User < ActiveRecord::Base
+  has_many :comments, :dependent => :destroy
   before_save :add_password
 
   def add_password

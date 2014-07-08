@@ -11,7 +11,7 @@ class UserController < ApplicationController
     @user = {
       :id => id, 
       :has_acted => false,
-      :allow_analytics => usr && usr.allow_analytics ? usr.allow_analytics : false,
+      :allow_analytics => usr && usr.allow_analytics != nil ? usr.allow_analytics : true,
       :name => usr && usr.name ? usr.name : "No Name",
       :email => usr && usr.email ? usr.email : "No email given"
     }    # create the user obj
