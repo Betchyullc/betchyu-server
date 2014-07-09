@@ -1,7 +1,8 @@
 class UserController < ApplicationController
 
   skip_before_action :verify_authenticity_token, only: [:card, :pay, :create, :update]
-  before_action :verify_user, only: [:pay, :update]
+  before_action :verify_user, only: [:pay, :update, :show_card]
+  before_action :match_uid_and_id, only: [:show_card]
 
   # checks to see if any database entries concerning the user :id
   #  exist, in order to return true/false, so that the app knows if the user is new or not
@@ -30,7 +31,11 @@ class UserController < ApplicationController
         card = cc if cc.default?
       end
 
-      render json: {card: card.masked_number}
+      render json: {
+        card: card.masked_number,
+        month: card.expiration_month,
+        year: card.expiration_year
+      }
 
     rescue Braintree::NotFoundError => e
       render json: { msg: "no card found, man" }
@@ -194,6 +199,10 @@ class UserController < ApplicationController
 
     def user_params
       params.permit(:fb_id, :device, :allow_analytics, :name, :is_male, :email, :location)
+    end
+
+    def match_uid_and_id
+      render json: "you can't see this" unless params[:uid] && params[:id] && params[:uid] == params[:id]
     end
 
 end
