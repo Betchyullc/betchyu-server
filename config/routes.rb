@@ -17,6 +17,7 @@ Server::Application.routes.draw do
   put 'user/:id' => 'user#update'
   post 'user' => 'user#create'
   post 'card' => 'user#card'
+  get 'card/:id' => 'user#show_card'
   put 'pay' => 'user#pay'
 
   # custom Bet routes

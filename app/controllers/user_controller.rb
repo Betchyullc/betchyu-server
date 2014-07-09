@@ -22,6 +22,21 @@ class UserController < ApplicationController
     render json: @user
   end
 
+  def show_card
+    begin
+      customer = Braintree::Customer.find(params[:id])
+      card = nil
+      customer.credit_cards.each do |cc|
+        card = cc if cc.default?
+      end
+
+      render json: {card: card.masked_number}
+
+    rescue Braintree::NotFoundError => e
+      render json: { msg: "no card found, man" }
+    end
+  end
+
   # validates the attached (from POST) card info via BrainTree servers, but DOES NOT
   #  make a transaction
   def card
