@@ -201,8 +201,4 @@ class UserController < ApplicationController
       params.permit(:fb_id, :device, :allow_analytics, :name, :is_male, :email, :location)
     end
 
-    def match_uid_and_id
-      render json: "you can't see this" unless params[:uid] && params[:id] && params[:uid] == params[:id]
-    end
-
 end

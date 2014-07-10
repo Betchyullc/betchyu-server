@@ -57,4 +57,8 @@ class ApplicationController < ActionController::Base
     end
     # the user is legit if we get here
   end
+
+  def match_uid_and_id
+    render json: { msg: "you can't see this" } unless params[:uid] && params[:id] && params[:uid] == params[:id]
+  end
 end

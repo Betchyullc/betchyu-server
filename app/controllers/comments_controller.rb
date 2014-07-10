@@ -1,6 +1,7 @@
 class CommentsController < ApplicationController
   before_action :set_comment, only: [:show, :edit, :update, :destroy]
   before_action :verify_user, except: [:index]
+  before_action :match_uid_and_user, only: [:destroy]
   skip_before_action :verify_authenticity_token, only: [:create, :update, :destroy]
 
   # GET /comments
@@ -75,5 +76,9 @@ class CommentsController < ApplicationController
     # Never trust parameters from the scary internet, only allow the white list through.
     def comment_params
       params.permit(:user_id, :bet_id, :text)
+    end
+
+    def match_uid_and_user
+      render json: { msg: "you can't see this" } unless params[:uid] && params[:uid] == @comment.user.fb_id
     end
 end
