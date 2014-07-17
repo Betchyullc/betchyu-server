@@ -1,5 +1,7 @@
 Server::Application.routes.draw do
 
+  root 'user#new'
+
   resources :comments
 
   get 'bets/cleanup' => 'bets#cleanup'
@@ -14,6 +16,7 @@ Server::Application.routes.draw do
   end
 
   get 'user/:id' => 'user#show'
+  get 'user/new' => 'user#new'
   put 'user/:id' => 'user#update'
   post 'user' => 'user#create'
   post 'card' => 'user#card'

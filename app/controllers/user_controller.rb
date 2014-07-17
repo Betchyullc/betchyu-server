@@ -7,7 +7,7 @@ class UserController < ApplicationController
   # checks to see if any database entries concerning the user :id
   #  exist, in order to return true/false, so that the app knows if the user is new or not
   def show
-    id = params[:id]    # convinience caching
+    id = params[:uid]    # convinience caching
     usr = User.where(fb_id: id).first
     @user = {
       :id => id, 
@@ -23,6 +23,9 @@ class UserController < ApplicationController
     render json: @user
   end
 
+  def new
+  end
+
   def show_card
     begin
       customer = Braintree::Customer.find(params[:id])
@@ -32,7 +35,7 @@ class UserController < ApplicationController
       end
 
       render json: {
-        card: card.masked_number,
+        card: "************"+card.last_4,
         month: card.expiration_month,
         year: card.expiration_year
       }
@@ -103,7 +106,6 @@ class UserController < ApplicationController
       b.update(status: owner_won ? "won" : "lost")
 
       if owner_won
-        push_notify_user(params[:user], "You won a bet. You'll recieve your prize soon--and your friends are paying!")
 
         b.invites.each do |i|
           if i.status == 'accepted'

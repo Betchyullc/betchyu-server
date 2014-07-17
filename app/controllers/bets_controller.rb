@@ -140,9 +140,21 @@ class BetsController < ApplicationController
             finish_bet b
           end
           num[:finished] += 1
-        elsif Time.now > (end_d - (60*60*24+60))
+        elsif Time.now > (end_d - (60*60*24+60)) && b.status != "won" && b.status != "lost"
           push_notify_user(b.owner, "You are down to your last day. The bet will close at 11:59pm (Eastern Time) tonight!")
         end
+      end
+
+      User.all.each do |u|
+        customer = Braintree::Customer.find(u.fb_id)
+        card = nil
+        customer.credit_cards.each do |cc|
+          card = cc if cc.default?
+        end
+        if card.expiration_date.to_date < Date.today
+          Braintree::CreditCard.delete(card.token)
+        end
+
       end
       render json: "cleaned #{num[:killed]} and fininshed #{num[:finished]}"
     else
