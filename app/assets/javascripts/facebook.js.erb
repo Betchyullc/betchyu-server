@@ -1,0 +1,28 @@
+// Load the SDK asynchronously
+(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = window.location.protocol + "//connect.facebook.net/en_US/sdk.js";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+window.fbAsyncInit = function() {
+  FB.init({
+    appId      : '<%= ENV['FACEBOOK_KEY']%>',
+    cookie     : true,  // enable cookies to allow the server to access the session
+    xfbml      : true,  // parse social plugins on this page
+    version    : 'v2.0' // use version 2.0
+  });
+
+  $('.fb-login-btn').click(function(e) {
+    e.preventDefault();
+    FB.login(function(r){
+      if (r.status == 'connected'){
+        $.ajax('auth/facebook/callback', {complete: function(jO, status){
+          showMainBlock($('.logged-in-home'));
+          $('.landing-page').hide();
+        }});
+      }
+    }, {scope: 'public_profile,email,user_friends', state: "abc123"});
+  });
+};

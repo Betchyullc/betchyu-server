@@ -1,0 +1,11 @@
+<div class="logged-in-home <%= logged_in ? 'visible' : 'hidden off-right' %>">
+<%= render 'home' %>
+</div>
+<div class="landing-page <%= logged_in ? 'hidden' : 'visible' %>">
+  <p>
+    At this time, the website version of Betchyu is under construction.
+  </p>
+  <div>
+    <%= link_to "Login with Facebook", "/auth/facebook", {class: "btn fb-login-btn"} %>
+  </div>
+</div>

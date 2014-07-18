@@ -1,6 +1,6 @@
 Server::Application.routes.draw do
 
-  root 'user#new'
+  root 'user#root'
 
   resources :comments
 
@@ -15,8 +15,8 @@ Server::Application.routes.draw do
     resources :comments
   end
 
-  get 'user/:id' => 'user#show'
   get 'user/new' => 'user#new'
+  get 'user/:id' => 'user#show'
   put 'user/:id' => 'user#update'
   post 'user' => 'user#create'
   post 'card' => 'user#card'
@@ -38,6 +38,9 @@ Server::Application.routes.draw do
   get 'analytics/daily' => 'analytics#daily'
   get 'analytics/buy' => 'analytics#need_to_buy'
 
+  get 'auth/:provider/callback' => 'sessions#create'
+  get 'auth/failure' => redirect('/')
+  get 'logout' => 'sessions#destroy', as: :logout
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 

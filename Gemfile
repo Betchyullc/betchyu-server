@@ -50,3 +50,5 @@ gem 'bcrypt', '~> 3.1.2'
 # gem 'debugger', group: [:development, :test]
 
 ruby "2.1.1"
+
+gem 'omniauth-facebook'

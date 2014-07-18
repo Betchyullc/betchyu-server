@@ -26,6 +26,9 @@ class UserController < ApplicationController
   def new
   end
 
+  def home
+  end
+
   def show_card
     begin
       customer = Braintree::Customer.find(params[:id])
@@ -40,7 +43,9 @@ class UserController < ApplicationController
         year: card.expiration_year
       }
 
-    rescue Braintree::NotFoundError => e, StandardError
+    rescue Braintree::NotFoundError => e
+      render json: { msg: "no card found, man" }
+    rescue StandardError => e
       render json: { msg: "no card found, man" }
     end
   end
