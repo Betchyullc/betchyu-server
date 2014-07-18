@@ -131,8 +131,9 @@ class BetsController < ApplicationController
         current = Time.now - b.created_at
         # if the bet has gone more than a third of it's length without being accepted
         if b.status == "pending" && current > expiration
-          b.destroy
+          push_notify_user(b.owner, "Your bet has been deleted, due to time expiring without anyone accepting the bet.")
           num[:killed] += 1
+          b.destroy
         elsif b.status == "accepted" && Time.now > end_d
           if b.verb != 'Stop'
             finish_bet(b, false)
@@ -144,19 +145,27 @@ class BetsController < ApplicationController
           push_notify_user(b.owner, "You are down to your last day. The bet will close at 11:59pm (Eastern Time) tonight!")
         end
       end
-
+      
+      # check each User's card
+      num[:deleted] = 0
       User.all.each do |u|
         customer = Braintree::Customer.find(u.fb_id)
-        card = nil
+        card = nil  # card is the default credit card listed for a user
         customer.credit_cards.each do |cc|
           card = cc if cc.default?
         end
+        # remove cards that have expired
         if card.expiration_date.to_date < Date.today
+          num[:deleted] += 1
           Braintree::CreditCard.delete(card.token)
         end
 
+        # once every 90 days, verify that the card is legit
+        if (Date.today.to_time.to_i / (24*60*60)) % 90 == 0
+          Braintree::CreditCard.update(card.token, :options => {:verify_card => true })
+        end
       end
-      render json: "cleaned #{num[:killed]} and fininshed #{num[:finished]}"
+      render json: "cleaned #{num[:killed]} and fininshed #{num[:finished]} and deleted #{num[:deleted]}"
     else
       render nothing: true
     end
