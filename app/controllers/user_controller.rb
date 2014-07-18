@@ -40,7 +40,7 @@ class UserController < ApplicationController
         year: card.expiration_year
       }
 
-    rescue Braintree::NotFoundError => e
+    rescue Braintree::NotFoundError => e, StandardError
       render json: { msg: "no card found, man" }
     end
   end
