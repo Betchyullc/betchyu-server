@@ -126,7 +126,7 @@ class BetsController < ApplicationController
     if params[:pw] && params[:pw] == Server::Application.config.pw
       num = {killed: 0, finished: 0}
       Bet.all.each do |b|
-        end_d = (b.created_at + b.duration).to_time
+        end_d = (b.created_at.to_date + b.duration).to_time
         expiration = (end_d - b.created_at) / 3 * 86400 #to get seconds
         current = Time.now - b.created_at
         # if the bet has gone more than a third of it's length without being accepted
