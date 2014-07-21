@@ -149,7 +149,11 @@ class BetsController < ApplicationController
       # check each User's card
       num[:deleted] = 0
       User.all.each do |u|
-        customer = Braintree::Customer.find(u.fb_id)
+        begin
+          customer = Braintree::Customer.find(u.fb_id)
+        rescue
+          next
+        end
         card = nil  # card is the default credit card listed for a user
         customer.credit_cards.each do |cc|
           card = cc if cc.default?
