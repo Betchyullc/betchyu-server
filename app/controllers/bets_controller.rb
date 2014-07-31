@@ -148,27 +148,27 @@ class BetsController < ApplicationController
       
       # check each User's card
       num[:deleted] = 0
-      User.all.each do |u|
-        begin
-          customer = Braintree::Customer.find(u.fb_id)
-        rescue
-          next
-        end
-        card = nil  # card is the default credit card listed for a user
-        customer.credit_cards.each do |cc|
-          card = cc if cc.default?
-        end
-        # remove cards that have expired
-        if card.expiration_date.to_date < Date.today
-          num[:deleted] += 1
-          Braintree::CreditCard.delete(card.token)
-        end
+#     User.all.each do |u|
+#       begin
+#         customer = Braintree::Customer.find(u.fb_id)
+#       rescue
+#         next
+#       end
+#       card = nil  # card is the default credit card listed for a user
+#       customer.credit_cards.each do |cc|
+#         card = cc if cc.default?
+#       end
+#       # remove cards that have expired
+#       if card.expiration_date.to_date < Date.today
+#         num[:deleted] += 1
+#         Braintree::CreditCard.delete(card.token)
+#       end
 
-        # once every 90 days, verify that the card is legit
-        if (Date.today.to_time.to_i / (24*60*60)) % 90 == 0
-          Braintree::CreditCard.update(card.token, :options => {:verify_card => true })
-        end
-      end
+#       # once every 90 days, verify that the card is legit
+#       if (Date.today.to_time.to_i / (24*60*60)) % 90 == 0
+#         Braintree::CreditCard.update(card.token, :options => {:verify_card => true })
+#       end
+#     end
       render json: "cleaned #{num[:killed]} and fininshed #{num[:finished]} and deleted #{num[:deleted]}"
     else
       render nothing: true
